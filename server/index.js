@@ -476,6 +476,186 @@ app.get('/api/stats', (req, res) => {
     }
 });
 
+// --- ATTENDANCE ---
+
+// Get today's attendance for all employees
+app.get('/api/attendance/today', (req, res) => {
+    const today = new Date().toISOString().split('T')[0];
+    try {
+        const employees = db.prepare('SELECT id, name, category FROM employees ORDER BY name').all();
+        const attendance = db.prepare('SELECT * FROM attendance WHERE date = ?').all(today);
+
+        const result = employees.map(emp => {
+            const record = attendance.find(a => a.employee_id === emp.id);
+            const empTasks = db.prepare(`
+                SELECT t.id, t.order_id, o.customer_name, o.category
+                FROM task_entries t
+                LEFT JOIN (
+                    SELECT o.id, c.name as customer_name, o.category
+                    FROM orders o JOIN customers c ON o.customer_id = c.id
+                ) o ON t.order_id = o.id
+                WHERE t.employee_id = ? AND t.date = ?
+                ORDER BY t.created_at DESC
+            `).all(emp.id, today);
+            return {
+                ...emp,
+                attendance_id: record?.id || null,
+                status: record?.status || null,
+                tasks_completed: empTasks.length,
+                task_entries: empTasks,
+                marked: !!record
+            };
+        });
+        res.json({ date: today, employees: result });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Mark attendance (today only)
+app.post('/api/attendance/mark', (req, res) => {
+    const { employee_id, status } = req.body;
+    const today = new Date().toISOString().split('T')[0];
+    try {
+        // Upsert: insert or replace
+        db.prepare(`
+            INSERT INTO attendance (employee_id, date, status)
+            VALUES (?, ?, ?)
+            ON CONFLICT(employee_id, date) DO UPDATE SET status = ?, marked_at = CURRENT_TIMESTAMP
+        `).run(employee_id, today, status || 'Present', status || 'Present');
+        res.json({ message: 'Attendance marked', date: today });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+// Get active orders (for task assignment dropdown)
+app.get('/api/attendance/orders/:employeeId', (req, res) => {
+    try {
+        // Get orders assigned to this employee first, then other active orders
+        const assignedOrders = db.prepare(`
+            SELECT DISTINCT o.id, c.name as customer_name, o.category, o.status, 1 as assigned
+            FROM orders o
+            JOIN customers c ON o.customer_id = c.id
+            JOIN order_assignments oa ON oa.order_id = o.id
+            WHERE oa.employee_id = ? AND o.status != 'Delivered'
+            ORDER BY o.created_at DESC
+        `).all(req.params.employeeId);
+
+        const otherOrders = db.prepare(`
+            SELECT o.id, c.name as customer_name, o.category, o.status, 0 as assigned
+            FROM orders o
+            JOIN customers c ON o.customer_id = c.id
+            WHERE o.status != 'Delivered'
+            AND o.id NOT IN (SELECT order_id FROM order_assignments WHERE employee_id = ?)
+            ORDER BY o.created_at DESC
+        `).all(req.params.employeeId);
+
+        res.json([...assignedOrders, ...otherOrders]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Add task entry (linked to order)
+app.post('/api/attendance/tasks', (req, res) => {
+    const { employee_id, order_id } = req.body;
+    const today = new Date().toISOString().split('T')[0];
+    try {
+        db.prepare('INSERT INTO task_entries (employee_id, order_id, date) VALUES (?, ?, ?)').run(employee_id, order_id, today);
+        // Also ensure attendance is marked as Present
+        db.prepare(`
+            INSERT INTO attendance (employee_id, date, status)
+            VALUES (?, ?, 'Present')
+            ON CONFLICT(employee_id, date) DO NOTHING
+        `).run(employee_id, today);
+        res.json({ message: 'Task added', date: today });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+// Remove task entry
+app.delete('/api/attendance/tasks/:taskId', (req, res) => {
+    try {
+        db.prepare('DELETE FROM task_entries WHERE id = ?').run(req.params.taskId);
+        res.json({ message: 'Task removed' });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+// Unmark attendance (remove today's record)
+app.delete('/api/attendance/:employeeId', (req, res) => {
+    const today = new Date().toISOString().split('T')[0];
+    try {
+        db.prepare('DELETE FROM attendance WHERE employee_id = ? AND date = ?').run(req.params.employeeId, today);
+        res.json({ message: 'Attendance removed' });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+// Weekly summary: each employee's attendance count for this week (Mon-Sun)
+app.get('/api/attendance/weekly', (req, res) => {
+    try {
+        const employees = db.prepare('SELECT id, name, category FROM employees ORDER BY name').all();
+
+        // Get start of current week (Monday)
+        const now = new Date();
+        const dayOfWeek = now.getDay(); // 0=Sun, 1=Mon...
+        const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+        const monday = new Date(now);
+        monday.setDate(now.getDate() + mondayOffset);
+        const mondayStr = monday.toISOString().split('T')[0];
+
+        const sundayDate = new Date(monday);
+        sundayDate.setDate(monday.getDate() + 6);
+        const sundayStr = sundayDate.toISOString().split('T')[0];
+
+        const weekAttendance = db.prepare(`
+            SELECT employee_id, date, status, tasks_completed
+            FROM attendance
+            WHERE date >= ? AND date <= ?
+            ORDER BY date
+        `).all(mondayStr, sundayStr);
+
+        // Build day labels Mon-Sun
+        const days = [];
+        for (let i = 0; i < 7; i++) {
+            const d = new Date(monday);
+            d.setDate(monday.getDate() + i);
+            days.push(d.toISOString().split('T')[0]);
+        }
+
+        const result = employees.map(emp => {
+            const empRecords = weekAttendance.filter(a => a.employee_id === emp.id);
+            const dayStatuses = days.map(day => {
+                const rec = empRecords.find(r => r.date === day);
+                const dayTaskCount = db.prepare('SELECT COUNT(*) as cnt FROM task_entries WHERE employee_id = ? AND date = ?').get(emp.id, day).cnt;
+                return { date: day, status: rec?.status || null, tasks: dayTaskCount };
+            });
+            const presentCount = empRecords.filter(r => r.status === 'Present').length;
+            const halfDayCount = empRecords.filter(r => r.status === 'Half-Day').length;
+            const totalTasks = days.reduce((sum, day) => {
+                return sum + db.prepare('SELECT COUNT(*) as cnt FROM task_entries WHERE employee_id = ? AND date = ?').get(emp.id, day).cnt;
+            }, 0);
+            return {
+                ...emp,
+                days: dayStatuses,
+                presentCount,
+                halfDayCount,
+                totalDays: presentCount + (halfDayCount * 0.5),
+                totalTasks
+            };
+        });
+
+        res.json({ weekStart: mondayStr, weekEnd: sundayStr, days, employees: result });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
 });

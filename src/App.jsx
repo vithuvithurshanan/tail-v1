@@ -9,6 +9,7 @@ import Orders from './pages/Orders';
 import Login from './pages/Login';
 import Notifications from './pages/Notifications';
 import Suppliers from './pages/Suppliers';
+import Attendance from './pages/Attendance';
 import { LogOut, Sun, Moon } from 'lucide-react';
 
 import {
@@ -22,7 +23,8 @@ import {
   Menu,
   X,
   ShoppingBag,
-  Truck
+  Truck,
+  ClipboardCheck
 } from 'lucide-react';
 
 import { Toaster } from 'react-hot-toast';
@@ -127,6 +129,7 @@ const App = () => {
               <SidebarItem to="/" icon={LayoutDashboard} label={isSidebarOpen ? "Dashboard" : ""} isDarkMode={isDarkMode} />
               <SidebarItem to="/orders" icon={ShoppingBag} label={isSidebarOpen ? "Orders" : ""} isDarkMode={isDarkMode} />
               <SidebarItem to="/employees" icon={Users} label={isSidebarOpen ? "Employees" : ""} isDarkMode={isDarkMode} />
+              <SidebarItem to="/attendance" icon={ClipboardCheck} label={isSidebarOpen ? "Attendance" : ""} isDarkMode={isDarkMode} />
               <SidebarItem to="/customers" icon={UserCircle} label={isSidebarOpen ? "Customers" : ""} isDarkMode={isDarkMode} />
               <SidebarItem to="/inventory" icon={Package} label={isSidebarOpen ? "Inventory" : ""} isDarkMode={isDarkMode} />
               <SidebarItem to="/suppliers" icon={Truck} label={isSidebarOpen ? "Suppliers" : ""} isDarkMode={isDarkMode} />
@@ -206,6 +209,7 @@ const App = () => {
             <Route path="/" element={<Dashboard />} />
             <Route path="/orders" element={<Orders />} />
             <Route path="/employees" element={<Employees />} />
+            <Route path="/attendance" element={<Attendance />} />
             <Route path="/customers" element={<Customers />} />
             <Route path="/inventory" element={<Inventory />} />
             <Route path="/suppliers" element={<Suppliers />} />

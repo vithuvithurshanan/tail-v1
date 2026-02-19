@@ -115,6 +115,25 @@ db.exec(`
     notes TEXT,
     FOREIGN KEY (employee_id) REFERENCES employees(id)
   );
+  CREATE TABLE IF NOT EXISTS attendance (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    employee_id TEXT NOT NULL,
+    date DATE NOT NULL,
+    status TEXT DEFAULT 'Present', -- Present, Absent, Half-Day
+    marked_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(employee_id, date),
+    FOREIGN KEY (employee_id) REFERENCES employees(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS task_entries (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    employee_id TEXT NOT NULL,
+    order_id TEXT NOT NULL,
+    date DATE NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (employee_id) REFERENCES employees(id),
+    FOREIGN KEY (order_id) REFERENCES orders(id)
+  );
 `);
 
 // Safely add new columns to existing inventory table (migration)
@@ -123,5 +142,8 @@ try { db.exec('ALTER TABLE inventory ADD COLUMN cost_price DECIMAL(10,2) DEFAULT
 
 // Safely add dress_color to orders (migration)
 try { db.exec("ALTER TABLE orders ADD COLUMN dress_color TEXT DEFAULT ''"); } catch (e) { }
+
+// Safely add tasks_completed to attendance (migration)
+try { db.exec('ALTER TABLE attendance ADD COLUMN tasks_completed INTEGER DEFAULT 0'); } catch (e) { }
 
 export default db;
