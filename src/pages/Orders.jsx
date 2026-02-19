@@ -684,21 +684,24 @@ const Orders = () => {
                             <div>
                                 <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Dress Color</label>
                                 <div className="flex gap-2 items-center">
-                                    <input
-                                        type="color"
-                                        value={formData.dress_color && formData.dress_color.startsWith('#') ? formData.dress_color : '#ffffff'}
-                                        onChange={(e) => setFormData({ ...formData, dress_color: e.target.value })}
-                                        className="w-10 h-10 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer p-0.5 bg-white dark:bg-slate-800 flex-shrink-0"
-                                        title="Pick a color"
-                                    />
+                                    <div
+                                        className="w-10 h-10 rounded-lg border-2 border-slate-200 dark:border-slate-700 flex-shrink-0 transition-colors"
+                                        style={{ backgroundColor: formData.dress_color || 'transparent' }}
+                                        title={formData.dress_color || 'No color selected'}
+                                    >
+                                        {!formData.dress_color && (
+                                            <div className="w-full h-full rounded-md bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 text-[10px] font-bold">?</div>
+                                        )}
+                                    </div>
                                     <input
                                         type="text"
-                                        placeholder="e.g. Navy Blue, Red, White..."
+                                        placeholder="e.g. Red, Navy, Maroon, White..."
                                         value={formData.dress_color}
                                         onChange={(e) => setFormData({ ...formData, dress_color: e.target.value })}
                                         className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white transition-all shadow-sm"
                                     />
                                 </div>
+                                <p className="text-[10px] text-slate-400 mt-1 italic">Type a color name and the preview will update automatically.</p>
                             </div>
 
                             {/* Measurement Inputs Section */}
