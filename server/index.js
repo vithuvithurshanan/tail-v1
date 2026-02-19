@@ -214,7 +214,8 @@ app.post('/api/measurements', (req, res) => {
 // --- ORDERS & ASSIGNMENTS ---
 app.get('/api/orders', (req, res) => {
     const orders = db.prepare(`
-    SELECT o.*, c.name as customer_name 
+    SELECT o.*, c.name as customer_name,
+    (SELECT GROUP_CONCAT(employee_id || ':' || role) FROM order_assignments WHERE order_id = o.id) as assignments_data
     FROM orders o 
     JOIN customers c ON o.customer_id = c.id 
     ORDER BY o.created_at DESC

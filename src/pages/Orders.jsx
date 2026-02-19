@@ -27,8 +27,14 @@ const Orders = () => {
     const [employees, setEmployees] = useState([]);
     const [customers, setCustomers] = useState([]);
 
-    // Standard measurement fields
-    const measurementFields = ['Length', 'Chest', 'Waist', 'Hips', 'Shoulder', 'Sleeves'];
+    // Standard measurement fields configuration
+    const MEASUREMENT_CONFIG = {
+        'Shirt': ['Length', 'Chest', 'Waist', 'Hips', 'Shoulder', 'Sleeves', 'Neck'],
+        'Pant': ['Length', 'Waist', 'Hips', 'Inseam', 'Thigh', 'Knee', 'Bottom'],
+        'Frock': ['Length', 'Chest', 'Waist', 'Shoulder', 'Sleeves', 'Flare'],
+        'Blouse': ['Length', 'Chest', 'Waist', 'Shoulder', 'Sleeves', 'Front Neck', 'Back Neck'],
+        'Other': ['Length', 'Width', 'Notes']
+    };
 
     const [formData, setFormData] = useState({
         customer_id: '',
@@ -249,7 +255,11 @@ const Orders = () => {
                             </button>
                             <button
                                 onClick={() => handleDeleteOrder(selectedOrder.id)}
-                                className="bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-600 text-rose-600 dark:text-rose-500 hover:text-white px-4 py-2 rounded-lg flex items-center gap-2 no-print transition-all shadow-sm"
+                                disabled={selectedOrder.status !== 'Pending'}
+                                className={`px-4 py-2 rounded-lg flex items-center gap-2 no-print transition-all shadow-sm ${selectedOrder.status === 'Pending'
+                                    ? "bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-600 text-rose-600 dark:text-rose-500 hover:text-white"
+                                    : "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed opacity-50"
+                                    }`}
                             >
                                 <Trash2 size={20} /> Cancel Order
                             </button>
@@ -314,7 +324,7 @@ const Orders = () => {
                         <div className="space-y-6 no-print">
                             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm dark:shadow-none">
                                 <h3 className="font-bold mb-4 text-slate-900 dark:text-white">Production Status</h3>
-                                <div className="space-y-4">
+                                <div className="space-y-4 mb-8">
                                     {['Pending', 'Cutting', 'Stitching', 'Finished', 'Delivered'].map((status) => (
                                         <button
                                             key={status}
@@ -326,6 +336,28 @@ const Orders = () => {
                                         </button>
                                     ))}
                                 </div>
+
+                                {selectedOrder.assignments_data && (
+                                    <div className="border-t border-slate-100 dark:border-slate-800 pt-6">
+                                        <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Assigned Team</h4>
+                                        <div className="space-y-3">
+                                            {selectedOrder.assignments_data.split(',').map((pair, idx) => {
+                                                const [empId, role] = pair.split(':');
+                                                return (
+                                                    <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+                                                        <div className="flex flex-col">
+                                                            <span className="text-[10px] text-slate-500 font-bold uppercase">{role}</span>
+                                                            <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{empId}</span>
+                                                        </div>
+                                                        <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                                                            <User size={14} />
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -540,7 +572,7 @@ const Orders = () => {
                                     <h4 className="text-sm font-bold uppercase tracking-wider">Measurements (Inches)</h4>
                                 </div>
                                 <div className="grid grid-cols-3 gap-4">
-                                    {measurementFields.map(field => (
+                                    {(MEASUREMENT_CONFIG[formData.category] || MEASUREMENT_CONFIG['Shirt']).map(field => (
                                         <div key={field}>
                                             <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">{field}</label>
                                             <input

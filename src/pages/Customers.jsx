@@ -43,6 +43,14 @@ const Customers = () => {
         values: {}
     });
 
+    const MEASUREMENT_CONFIG = {
+        'Shirt': ['Length', 'Chest', 'Waist', 'Hips', 'Shoulder', 'Sleeves', 'Neck'],
+        'Pant': ['Length', 'Waist', 'Hips', 'Inseam', 'Thigh', 'Knee', 'Bottom'],
+        'Frock': ['Length', 'Chest', 'Waist', 'Shoulder', 'Sleeves', 'Flare'],
+        'Blouse': ['Length', 'Chest', 'Waist', 'Shoulder', 'Sleeves', 'Front Neck', 'Back Neck'],
+        'Other': ['Length', 'Width', 'Notes']
+    };
+
     const [searchQuery, setSearchQuery] = useState('');
 
     const fetchCustomers = async () => {
@@ -435,12 +443,13 @@ const Customers = () => {
                             </div>
 
                             <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-                                {['Length', 'Chest', 'Waist', 'Hips', 'Shoulder', 'Sleeves'].map((field) => (
+                                {(MEASUREMENT_CONFIG[measurementData.category] || MEASUREMENT_CONFIG['Shirt']).map((field) => (
                                     <div key={field}>
                                         <label className="block text-[10px] font-black text-slate-400 uppercase mb-2 ml-1 tracking-widest">{field} (in)</label>
                                         <input
                                             type="text"
                                             placeholder="0.0"
+                                            value={measurementData.values[field] || ''}
                                             onChange={(e) => setMeasurementData({
                                                 ...measurementData,
                                                 values: { ...measurementData.values, [field]: e.target.value }
