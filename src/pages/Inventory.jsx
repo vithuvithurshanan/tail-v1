@@ -96,24 +96,24 @@ const Inventory = () => {
     return (
         <>
             {/* Main UI - Hidden during printing */}
-            <div className="p-6 md:p-10 lg:p-12 w-full space-y-6 transition-all duration-300 print:hidden">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="page-container print:hidden">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
                     <div>
-                        <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">Inventory</h1>
-                        <p className="text-slate-500 dark:text-slate-400">Track fabric, threads, and tailoring accessories.</p>
+                        <h1 className="page-header-h1">Inventory</h1>
+                        <p className="text-slate-500 dark:text-slate-400 font-medium tracking-tight">Track fabric, threads, and tailoring accessories.</p>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-3">
                         <button
                             onClick={() => window.print()}
-                            className="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-transform active:scale-95 shadow-lg shadow-slate-500/10 border border-slate-700"
+                            className="btn-secondary"
                         >
-                            <Printer size={20} /> Print List
+                            <Printer size={18} /> Print List
                         </button>
                         <button
                             onClick={() => { setShowAddModal(true); setIsEditing(false); }}
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-transform active:scale-95 shadow-lg shadow-blue-500/20"
+                            className="btn-primary"
                         >
-                            <Plus size={20} /> Add Item
+                            <Plus size={18} /> Add Item
                         </button>
                     </div>
                 </div>
@@ -210,31 +210,31 @@ const Inventory = () => {
                             </div>
                             <form onSubmit={handleSubmit} className="p-6 space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Item Name</label>
+                                    <label className="label-standard">Item Name</label>
                                     <input
                                         required
                                         type="text"
                                         value={formData.item_name}
                                         onChange={(e) => setFormData({ ...formData, item_name: e.target.value })}
-                                        className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white transition-all shadow-sm"
+                                        className="input-standard"
                                     />
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Quantity</label>
+                                        <label className="label-standard">Quantity</label>
                                         <input
                                             type="number"
                                             value={formData.quantity}
                                             onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
-                                            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white transition-all shadow-sm"
+                                            className="input-standard"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Unit</label>
+                                        <label className="label-standard">Unit</label>
                                         <select
                                             value={formData.unit}
                                             onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                                            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white transition-all shadow-sm"
+                                            className="input-standard cursor-pointer"
                                         >
                                             <option>Meters</option>
                                             <option>Pieces</option>
@@ -244,16 +244,16 @@ const Inventory = () => {
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Minimum Alert Level</label>
+                                    <label className="label-standard">Minimum Alert Level</label>
                                     <input
                                         type="number"
                                         value={formData.min_level}
                                         onChange={(e) => setFormData({ ...formData, min_level: e.target.value })}
-                                        className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white transition-all shadow-sm"
+                                        className="input-standard"
                                     />
                                 </div>
                                 <div className="pt-4">
-                                    <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-xl font-bold text-white transition-all shadow-lg shadow-blue-500/20">
+                                    <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 py-4 rounded-xl font-bold text-white transition-all shadow-xl shadow-blue-500/20 uppercase tracking-[0.2em] text-[10px]">
                                         {isEditing ? 'Update Item' : 'Add to Inventory'}
                                     </button>
                                 </div>

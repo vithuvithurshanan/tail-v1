@@ -118,17 +118,17 @@ const Finance = () => {
     };
 
     return (
-        <div className="p-6 md:p-10 lg:p-12 w-full space-y-6 transition-all duration-300">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="page-container">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
                 <div>
-                    <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">Finance & Accounts</h1>
-                    <p className="text-slate-500 dark:text-slate-400">Manage employee salaries, cheques, and utility expenses.</p>
+                    <h1 className="page-header-h1">Finance</h1>
+                    <p className="text-slate-500 dark:text-slate-400 font-medium tracking-tight">Manage employee salaries, cheques, and utility expenses.</p>
                 </div>
                 <button
                     onClick={() => setShowAddModal(true)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-transform active:scale-95 shadow-lg shadow-blue-500/20 font-bold uppercase text-xs tracking-widest"
+                    className="btn-primary"
                 >
-                    <Plus size={20} /> New Entry
+                    <Plus size={18} /> New Entry
                 </button>
             </div>
 
@@ -295,9 +295,9 @@ const Finance = () => {
                             {activeTab === 'salaries' && (
                                 <>
                                     <div>
-                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Select Employee</label>
+                                        <label className="label-standard">Select Employee</label>
                                         <select
-                                            className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800 p-4 rounded-2xl outline-none focus:border-blue-600 text-slate-900 dark:text-white font-bold transition-all shadow-sm"
+                                            className="input-standard appearance-none cursor-pointer"
                                             onChange={e => setFormData({ ...formData, employee_id: e.target.value })}
                                             value={formData.employee_id}
                                             required
@@ -310,26 +310,26 @@ const Finance = () => {
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Amount (LKR)</label>
-                                            <input type="number" placeholder="0.00" className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800 p-4 rounded-2xl outline-none focus:border-blue-600 text-slate-900 dark:text-white font-black transition-all shadow-sm" onChange={e => setFormData({ ...formData, amount: e.target.value })} required />
+                                            <label className="label-standard">Amount (LKR)</label>
+                                            <input type="number" placeholder="0.00" className="input-standard" onChange={e => setFormData({ ...formData, amount: e.target.value })} required />
                                         </div>
                                         <div>
-                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Payment Month</label>
-                                            <input type="text" placeholder="e.g. Oct 2026" className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800 p-4 rounded-2xl outline-none focus:border-blue-600 text-slate-900 dark:text-white font-bold transition-all shadow-sm" onChange={e => setFormData({ ...formData, month: e.target.value })} required />
+                                            <label className="label-standard">Payment Month</label>
+                                            <input type="text" placeholder="e.g. Oct 2026" className="input-standard" onChange={e => setFormData({ ...formData, month: e.target.value })} required />
                                         </div>
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Payment Period</label>
-                                            <select className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800 p-4 rounded-2xl outline-none focus:border-blue-600 text-slate-900 dark:text-white font-bold transition-all shadow-sm" onChange={e => setFormData({ ...formData, pay_period: e.target.value })} value={formData.pay_period}>
+                                            <label className="label-standard">Payment Period</label>
+                                            <select className="input-standard appearance-none cursor-pointer" onChange={e => setFormData({ ...formData, pay_period: e.target.value })} value={formData.pay_period}>
                                                 <option>Daily</option>
                                                 <option>Weekly</option>
                                                 <option>Monthly</option>
                                             </select>
                                         </div>
                                         <div>
-                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Type</label>
-                                            <select className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800 p-4 rounded-2xl outline-none focus:border-blue-600 text-slate-900 dark:text-white font-bold transition-all shadow-sm" onChange={e => setFormData({ ...formData, salary_type: e.target.value })}>
+                                            <label className="label-standard">Type</label>
+                                            <select className="input-standard appearance-none cursor-pointer" onChange={e => setFormData({ ...formData, salary_type: e.target.value })}>
                                                 <option>Full Salary</option>
                                                 <option>Advance</option>
                                                 <option>Bonus</option>
@@ -337,8 +337,8 @@ const Finance = () => {
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Notes (Optional)</label>
-                                        <input type="text" placeholder="Additional details..." className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800 p-4 rounded-2xl outline-none focus:border-blue-600 text-slate-900 dark:text-white font-medium transition-all shadow-sm" onChange={e => setFormData({ ...formData, notes: e.target.value })} />
+                                        <label className="label-standard">Notes (Optional)</label>
+                                        <input type="text" placeholder="Additional details..." className="input-standard" onChange={e => setFormData({ ...formData, notes: e.target.value })} />
                                     </div>
                                 </>
                             )}
@@ -346,20 +346,20 @@ const Finance = () => {
                             {activeTab === 'cheques' && (
                                 <>
                                     <div>
-                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Cheque Number</label>
-                                        <input type="text" placeholder="CHQ-0000" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 rounded-2xl outline-none focus:border-blue-600 text-slate-900 dark:text-white font-bold transition-all shadow-sm" onChange={e => setFormData({ ...formData, cheque_number: e.target.value })} required />
+                                        <label className="label-standard">Cheque Number</label>
+                                        <input type="text" placeholder="CHQ-0000" className="input-standard" onChange={e => setFormData({ ...formData, cheque_number: e.target.value })} required />
                                     </div>
                                     <div>
-                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Amount (LKR)</label>
-                                        <input type="number" placeholder="0.00" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 rounded-2xl outline-none focus:border-blue-600 text-slate-900 dark:text-white font-black transition-all shadow-sm" onChange={e => setFormData({ ...formData, amount: e.target.value })} required />
+                                        <label className="label-standard">Amount (LKR)</label>
+                                        <input type="number" placeholder="0.00" className="input-standard" onChange={e => setFormData({ ...formData, amount: e.target.value })} required />
                                     </div>
                                     <div>
-                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Due Date</label>
-                                        <input type="date" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 rounded-2xl outline-none focus:border-blue-600 text-slate-900 dark:text-white font-bold transition-all shadow-sm" onChange={e => setFormData({ ...formData, due_date: e.target.value })} required />
+                                        <label className="label-standard">Due Date</label>
+                                        <input type="date" className="input-standard" onChange={e => setFormData({ ...formData, due_date: e.target.value })} required />
                                     </div>
                                     <div>
-                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Receiver / Purpose</label>
-                                        <input type="text" placeholder="Vendor name..." className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 rounded-2xl outline-none focus:border-blue-600 text-slate-900 dark:text-white font-bold transition-all shadow-sm" onChange={e => setFormData({ ...formData, given_to: e.target.value })} />
+                                        <label className="label-standard">Receiver / Purpose</label>
+                                        <input type="text" placeholder="Vendor name..." className="input-standard" onChange={e => setFormData({ ...formData, given_to: e.target.value })} />
                                     </div>
                                     <div className="border-4 border-dashed border-slate-100 dark:border-slate-800 p-8 rounded-3xl text-center hover:border-blue-600 transition-colors group">
                                         <input type="file" id="file" className="hidden" onChange={e => setFile(e.target.files[0])} />
@@ -376,8 +376,8 @@ const Finance = () => {
                             {activeTab === 'utilities' && (
                                 <>
                                     <div>
-                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Category</label>
-                                        <select className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 rounded-2xl outline-none focus:border-blue-600 text-slate-900 dark:text-white font-bold transition-all shadow-sm" onChange={e => setFormData({ ...formData, type: e.target.value })}>
+                                        <label className="label-standard">Category</label>
+                                        <select className="input-standard appearance-none cursor-pointer" onChange={e => setFormData({ ...formData, type: e.target.value })}>
                                             <option>Electricity</option>
                                             <option>Water</option>
                                             <option>EPF</option>
@@ -385,12 +385,12 @@ const Finance = () => {
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Amount (LKR)</label>
-                                        <input type="number" placeholder="0.00" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 rounded-2xl outline-none focus:border-blue-600 text-slate-900 dark:text-white font-black transition-all shadow-sm" onChange={e => setFormData({ ...formData, amount: e.target.value })} required />
+                                        <label className="label-standard">Amount (LKR)</label>
+                                        <input type="number" placeholder="0.00" className="input-standard" onChange={e => setFormData({ ...formData, amount: e.target.value })} required />
                                     </div>
                                     <div>
-                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Due Date</label>
-                                        <input type="date" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 rounded-2xl outline-none focus:border-blue-600 text-slate-900 dark:text-white font-bold transition-all shadow-sm" onChange={e => setFormData({ ...formData, due_date: e.target.value })} required />
+                                        <label className="label-standard">Due Date</label>
+                                        <input type="date" className="input-standard" onChange={e => setFormData({ ...formData, due_date: e.target.value })} required />
                                     </div>
                                 </>
                             )}

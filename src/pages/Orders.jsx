@@ -495,24 +495,24 @@ const Orders = () => {
                     </div>
                 </div>
             ) : (
-                <div className="p-6 md:p-10 lg:p-12 w-full space-y-6 transition-all duration-300">
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="page-container">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
                         <div>
-                            <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">Orders</h1>
-                            <p className="text-slate-500 dark:text-slate-400">Track dress orders and production stages.</p>
+                            <h1 className="page-header-h1">Orders</h1>
+                            <p className="text-slate-500 dark:text-slate-400 font-medium tracking-tight">Track dress orders and production stages.</p>
                         </div>
-                        <div className="flex gap-3">
+                        <div className="flex gap-3 items-center">
                             <button
                                 onClick={() => window.print()}
-                                className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-600 dark:text-slate-300 px-4 py-2 rounded-lg flex items-center gap-2 transition-all font-bold no-print"
+                                className="btn-secondary no-print"
                             >
-                                <Printer size={20} /> Print List
+                                <Printer size={18} /> Print List
                             </button>
                             <button
                                 onClick={() => { setShowAddModal(true); setIsEditing(false); }}
-                                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-transform active:scale-95 shadow-lg shadow-blue-500/20 font-bold no-print"
+                                className="btn-primary no-print"
                             >
-                                <Plus size={20} /> New Order
+                                <Plus size={18} /> New Order
                             </button>
                         </div>
                     </div>

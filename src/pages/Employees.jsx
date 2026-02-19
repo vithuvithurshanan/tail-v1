@@ -157,11 +157,11 @@ const Employees = () => {
                             </div>
                         </div>
                         <div className="flex gap-3 no-print">
-                            <button onClick={(e) => handleEdit(viewingDetails, e)} className="px-6 py-3 bg-slate-100 dark:bg-slate-800 rounded-2xl font-bold text-slate-600 hover:bg-slate-200 transition-all flex items-center gap-2">
+                            <button onClick={(e) => handleEdit(viewingDetails, e)} className="btn-secondary">
                                 <Edit size={18} /> Edit Profile
                             </button>
-                            <button onClick={(e) => handleDelete(viewingDetails.id, e)} className="p-3 bg-rose-50 text-rose-600 rounded-2xl hover:bg-rose-600 hover:text-white transition-all">
-                                <Trash2 size={24} />
+                            <button onClick={(e) => handleDelete(viewingDetails.id, e)} className="p-3 bg-rose-600/10 text-rose-600 rounded-2xl hover:bg-rose-600 hover:text-white transition-all active:scale-95">
+                                <Trash2 size={20} />
                             </button>
                         </div>
                     </div>
@@ -258,24 +258,24 @@ const Employees = () => {
                     </div>
                 </div>
             ) : (
-                <div className="p-6 md:p-10 lg:p-12 w-full space-y-6 animate-in fade-in transition-all duration-300">
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="page-container">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
                         <div>
-                            <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">Workforce</h1>
-                            <p className="text-slate-500 dark:text-slate-400">Manage your tailoring team and production staff.</p>
+                            <h1 className="page-header-h1">Workforce</h1>
+                            <p className="text-slate-500 dark:text-slate-400 font-medium tracking-tight">Manage your tailoring team and production staff.</p>
                         </div>
-                        <div className="flex gap-3">
+                        <div className="flex gap-3 items-center">
                             <button
                                 onClick={() => window.print()}
-                                className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-600 dark:text-slate-300 px-4 py-2 rounded-lg flex items-center gap-2 transition-all font-bold no-print"
+                                className="btn-secondary no-print"
                             >
-                                <Printer size={20} /> Print List
+                                <Printer size={18} /> Print List
                             </button>
                             <button
                                 onClick={() => { setShowAddModal(true); setIsEditing(false); }}
-                                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2 transition-transform active:scale-95 shadow-xl shadow-blue-500/20 font-bold no-print"
+                                className="btn-primary no-print"
                             >
-                                <Plus size={20} /> Add Employee
+                                <Plus size={18} /> Add Employee
                             </button>
                         </div>
                     </div>
@@ -341,7 +341,7 @@ const Employees = () => {
                             <div
                                 key={emp.id}
                                 onClick={() => handleViewDetails(emp)}
-                                className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2.5rem] p-8 hover:shadow-2xl hover:shadow-blue-500/10 hover:-translate-y-2 transition-all cursor-pointer group shadow-sm border-b-4 border-b-transparent hover:border-b-blue-600"
+                                className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl p-6 hover:shadow-2xl hover:shadow-blue-500/10 hover:-translate-y-1 transition-all cursor-pointer group shadow-sm border-b-4 border-b-transparent hover:border-b-blue-600"
                             >
                                 <div className="flex flex-col items-center text-center">
                                     <div className="w-24 h-24 rounded-[2rem] bg-slate-50 dark:bg-slate-800 text-blue-600 flex items-center justify-center font-black text-3xl mb-6 shadow-inner ring-4 ring-white dark:ring-slate-900 transition-transform group-hover:rotate-6">
@@ -383,39 +383,39 @@ const Employees = () => {
             {/* Add/Edit Modal */}
             {showAddModal && (
                 <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-[100] flex items-center justify-center p-4 transition-all animate-in fade-in">
-                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden">
-                        <div className="p-10 bg-blue-600 text-white">
-                            <h3 className="text-3xl font-black tracking-tight">{isEditing ? 'UPDATE WORKER' : 'NEW EMPLOYEE'}</h3>
-                            <p className="text-blue-100 font-bold mt-1 uppercase text-xs tracking-widest">Employee Profile Management</p>
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-md rounded-3xl shadow-2xl overflow-hidden">
+                        <div className="p-8 bg-blue-600 text-white">
+                            <h3 className="text-2xl font-black tracking-tight">{isEditing ? 'UPDATE WORKER' : 'NEW EMPLOYEE'}</h3>
+                            <p className="text-blue-100 font-bold mt-1 uppercase text-[10px] tracking-widest">Employee Profile Management</p>
                         </div>
-                        <form onSubmit={handleSubmit} className="p-10 space-y-6">
+                        <form onSubmit={handleSubmit} className="p-8 space-y-5">
                             <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Full Identity Name</label>
+                                <label className="label-standard">Full Identity Name</label>
                                 <input
                                     required
                                     type="text"
                                     value={formData.name}
                                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                    className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-6 py-4 focus:border-blue-600 outline-none text-slate-900 dark:text-white transition-all font-bold"
+                                    className="input-standard text-base"
                                     placeholder="Enter employee name..."
                                 />
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 gap-6">
                                 <div>
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Age</label>
+                                    <label className="label-standard">Age</label>
                                     <input
                                         type="number"
                                         value={formData.age}
                                         onChange={(e) => setFormData({ ...formData, age: e.target.value })}
-                                        className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-6 py-4 focus:border-blue-600 outline-none text-slate-900 dark:text-white transition-all font-bold"
+                                        className="input-standard text-base"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Work Group</label>
+                                    <label className="label-standard">Work Group</label>
                                     <select
                                         value={formData.category}
                                         onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                                        className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-6 py-4 focus:border-blue-600 outline-none text-slate-900 dark:text-white transition-all font-bold"
+                                        className="input-standard text-base appearance-none cursor-pointer"
                                     >
                                         <option>Cutting Master</option>
                                         <option>Stitching Master</option>
@@ -424,28 +424,28 @@ const Employees = () => {
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Active Contact</label>
+                                <label className="label-standard">Active Contact</label>
                                 <input
                                     required
                                     type="text"
                                     value={formData.contact}
                                     onChange={(e) => setFormData({ ...formData, contact: e.target.value })}
-                                    className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-6 py-4 focus:border-blue-600 outline-none text-slate-900 dark:text-white transition-all font-bold"
+                                    className="input-standard text-base"
                                     placeholder="07X XXX XXXX"
                                 />
                             </div>
                             <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Current Address</label>
+                                <label className="label-standard">Current Address</label>
                                 <textarea
                                     rows={2}
                                     value={formData.address}
                                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                                    className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-6 py-4 focus:border-blue-600 outline-none text-slate-900 dark:text-white transition-all font-medium"
+                                    className="input-standard font-medium text-base h-32"
                                 />
                             </div>
                             <div className="pt-6 flex gap-4">
-                                <button type="button" onClick={closeModal} className="flex-1 bg-slate-100 dark:bg-slate-800 py-4 rounded-2xl font-bold text-slate-500 active:scale-95 transition-all">Cancel</button>
-                                <button type="submit" className="flex-1 bg-blue-600 py-4 rounded-2xl font-black text-white shadow-xl shadow-blue-500/30 active:scale-95 transition-all uppercase tracking-widest">
+                                <button type="button" onClick={closeModal} className="flex-1 bg-slate-100 dark:bg-slate-800 py-4 rounded-2xl font-bold text-slate-500 active:scale-95 transition-all uppercase tracking-widest text-[10px]">Cancel</button>
+                                <button type="submit" className="flex-1 bg-blue-600 py-4 rounded-2xl font-black text-white shadow-xl shadow-blue-500/30 active:scale-95 transition-all uppercase tracking-[0.2em] text-[10px]">
                                     {isEditing ? 'Save Changes' : 'Register Worker'}
                                 </button>
                             </div>

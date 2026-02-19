@@ -300,24 +300,24 @@ const Customers = () => {
                     </div>
                 </div>
             ) : (
-                <div className="p-6 md:p-10 lg:p-12 w-full space-y-6 transition-all duration-300 animate-in fade-in">
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 print:hidden">
+                <div className="page-container">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
                         <div>
-                            <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">Customers</h1>
-                            <p className="text-slate-500 dark:text-slate-400">Manage customer profiles and historical records.</p>
+                            <h1 className="page-header-h1">Customers</h1>
+                            <p className="text-slate-500 dark:text-slate-400 font-medium tracking-tight">Manage customer profiles and historical records.</p>
                         </div>
-                        <div className="flex gap-3">
+                        <div className="flex gap-3 items-center">
                             <button
                                 onClick={() => window.print()}
-                                className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-600 dark:text-slate-300 px-4 py-2 rounded-lg flex items-center gap-2 transition-all font-bold no-print"
+                                className="btn-secondary no-print"
                             >
-                                <Printer size={20} /> Print List
+                                <Printer size={18} /> Print List
                             </button>
                             <button
                                 onClick={() => { setShowAddModal(true); setIsEditing(false); }}
-                                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-transform active:scale-95 shadow-lg shadow-blue-500/20 font-bold no-print"
+                                className="btn-primary no-print"
                             >
-                                <Plus size={20} /> New Customer
+                                <Plus size={18} /> New Customer
                             </button>
                         </div>
                     </div>
@@ -481,41 +481,41 @@ const Customers = () => {
                         </div>
                         <form onSubmit={handleSubmit} className="p-8 space-y-5">
                             <div>
-                                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Customer Full Name</label>
+                                <label className="label-standard">Customer Full Name</label>
                                 <input
                                     required
                                     type="text"
                                     value={formData.name}
                                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                    className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-5 py-4 focus:border-blue-600 outline-none transition-all text-slate-900 dark:text-white font-bold shadow-sm"
+                                    className="input-standard"
                                     placeholder="Enter name..."
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Contact Number</label>
+                                <label className="label-standard">Contact Number</label>
                                 <input
                                     required
                                     type="text"
                                     value={formData.contact}
                                     onChange={(e) => setFormData({ ...formData, contact: e.target.value })}
-                                    className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-5 py-4 focus:border-blue-600 outline-none transition-all text-slate-900 dark:text-white font-bold shadow-sm"
+                                    className="input-standard font-mono"
                                     placeholder="07X XXX XXXX"
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Residential Address</label>
+                                <label className="label-standard">Residential Address</label>
                                 <textarea
                                     rows={3}
                                     value={formData.address}
                                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                                    className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-5 py-4 focus:border-blue-600 outline-none transition-all text-slate-900 dark:text-white font-medium shadow-sm"
+                                    className="input-standard font-medium h-32"
                                     placeholder="Full address here..."
                                 />
                             </div>
                             <div className="pt-6">
                                 <button
                                     type="submit"
-                                    className="w-full bg-blue-600 hover:bg-blue-700 py-5 rounded-2xl font-black text-white transition-all shadow-xl shadow-blue-600/20 active:scale-[0.98] uppercase tracking-widest"
+                                    className="w-full bg-blue-600 hover:bg-blue-700 py-5 rounded-2xl font-black text-white transition-all shadow-xl shadow-blue-600/20 active:scale-[0.98] uppercase tracking-[0.2em] text-[10px]"
                                 >
                                     {isEditing ? 'Save Changes' : 'Create Profile'}
                                 </button>
