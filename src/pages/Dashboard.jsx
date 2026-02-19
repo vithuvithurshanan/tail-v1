@@ -49,6 +49,7 @@ const Dashboard = () => {
         pendingOrders: 0,
         lowStock: 0,
         totalRevenue: 0,
+        balanceDue: 0,
         chartData: [],
         recentOrders: []
     });
@@ -78,14 +79,20 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
                 <StatCard
-                    title="Revenue (LKR)"
-                    value={stats.totalRevenue.toLocaleString()}
+                    title="Total Income (LKR)"
+                    value={`LKR ${stats.totalRevenue.toLocaleString()}`}
                     icon={DollarSign}
                     color="bg-emerald-500"
                     trend="up"
-                    trendValue="15%"
+                    trendValue="Delivered"
+                />
+                <StatCard
+                    title="Balance Due (LKR)"
+                    value={`LKR ${stats.balanceDue.toLocaleString()}`}
+                    icon={AlertTriangle}
+                    color="bg-amber-500"
                 />
                 <StatCard
                     title="Total Employees"
@@ -100,13 +107,13 @@ const Dashboard = () => {
                     color="bg-purple-500"
                 />
                 <StatCard
-                    title="Queue"
+                    title="Active Orders"
                     value={stats.pendingOrders}
                     icon={Clock}
-                    color="bg-amber-500"
+                    color="bg-indigo-500"
                 />
                 <StatCard
-                    title="Alerts"
+                    title="Low Stock Alerts"
                     value={stats.lowStock}
                     icon={AlertTriangle}
                     color="bg-rose-500"

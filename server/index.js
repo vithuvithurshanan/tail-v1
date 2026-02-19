@@ -320,8 +320,18 @@ app.patch('/api/orders/:id/status', (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
     try {
+        const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(id);
+        if (!order) return res.status(404).json({ error: 'Order not found' });
+
         db.prepare('UPDATE orders SET status = ? WHERE id = ?').run(status, id);
-        res.json({ message: 'Status updated' });
+
+        // When marked Delivered, the full total_amount counts as income
+        // (tracked via delivered orders in stats - no extra table needed)
+        res.json({
+            message: 'Status updated',
+            isDelivered: status === 'Delivered',
+            incomeAdded: status === 'Delivered' ? order.total_amount : 0
+        });
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
@@ -383,7 +393,14 @@ app.get('/api/stats', (req, res) => {
             customers: db.prepare('SELECT COUNT(*) as count FROM customers').get().count,
             pendingOrders: db.prepare("SELECT COUNT(*) as count FROM orders WHERE status != 'Delivered'").get().count,
             lowStock: db.prepare('SELECT COUNT(*) as count FROM inventory WHERE quantity <= min_level').get().count,
-            totalRevenue: db.prepare('SELECT SUM(total_amount) as total FROM orders').get().total || 0,
+            // Total income = advances collected from ALL orders + full total from DELIVERED orders
+            totalRevenue: (() => {
+                const advanceFromPending = db.prepare("SELECT COALESCE(SUM(advance_amount), 0) as total FROM orders WHERE status != 'Delivered'").get().total || 0;
+                const fullFromDelivered = db.prepare("SELECT COALESCE(SUM(total_amount), 0) as total FROM orders WHERE status = 'Delivered'").get().total || 0;
+                return advanceFromPending + fullFromDelivered;
+            })(),
+            // Balance due = sum of (total - advance) for all non-delivered orders (outstanding payments)
+            balanceDue: db.prepare("SELECT COALESCE(SUM(total_amount - advance_amount), 0) as total FROM orders WHERE status != 'Delivered'").get().total || 0,
         };
 
         const recentOrders = db.prepare(`

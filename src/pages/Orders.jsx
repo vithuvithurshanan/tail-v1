@@ -212,8 +212,12 @@ const Orders = () => {
 
     const handleStatusChange = async (newStatus) => {
         try {
-            await axios.patch(`http://localhost:3001/api/orders/${selectedOrder.id}/status`, { status: newStatus });
-            toast.success(`Order status updated to ${newStatus}`);
+            const res = await axios.patch(`http://localhost:3001/api/orders/${selectedOrder.id}/status`, { status: newStatus });
+            if (newStatus === 'Delivered') {
+                toast.success(`✅ Order delivered! LKR ${Number(selectedOrder.total_amount).toLocaleString()} added to Total Income.`);
+            } else {
+                toast.success(`Order status updated to ${newStatus}`);
+            }
             setSelectedOrder({ ...selectedOrder, status: newStatus });
             fetchData();
         } catch (err) {
@@ -227,7 +231,7 @@ const Orders = () => {
             case 'Cutting': return 'bg-blue-100 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400';
             case 'Stitching': return 'bg-purple-100 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400';
             case 'Finished': return 'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400';
-            case 'Delivered': return 'bg-slate-200 dark:bg-slate-900 text-slate-700 dark:text-slate-600';
+            case 'Delivered': return 'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400';
             default: return 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400';
         }
     };
@@ -332,10 +336,20 @@ const Orders = () => {
                                         <span className="text-slate-500 dark:text-slate-400">Advance Paid</span>
                                         <span className="text-emerald-600 dark:text-emerald-400">LKR {selectedOrder.advance_amount?.toLocaleString()}</span>
                                     </div>
-                                    <div className="flex justify-between border-t border-slate-200 dark:border-slate-800 pt-4 text-xl">
-                                        <span className="font-bold text-slate-900 dark:text-white">Balance Due</span>
-                                        <span className="font-black text-blue-600 dark:text-blue-400">LKR {(selectedOrder.total_amount - selectedOrder.advance_amount).toLocaleString()}</span>
-                                    </div>
+                                    {selectedOrder.status === 'Delivered' ? (
+                                        <div className="flex justify-between items-center border-t border-slate-200 dark:border-slate-800 pt-4">
+                                            <span className="font-bold text-slate-900 dark:text-white text-xl">Status</span>
+                                            <span className="inline-flex items-center gap-2 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-black text-sm px-4 py-2 rounded-full">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                                                Delivered / Paid
+                                            </span>
+                                        </div>
+                                    ) : (
+                                        <div className="flex justify-between border-t border-slate-200 dark:border-slate-800 pt-4 text-xl">
+                                            <span className="font-bold text-slate-900 dark:text-white">Balance Due</span>
+                                            <span className="font-black text-blue-600 dark:text-blue-400">LKR {(selectedOrder.total_amount - selectedOrder.advance_amount).toLocaleString()}</span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
