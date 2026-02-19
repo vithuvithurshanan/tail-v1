@@ -58,6 +58,12 @@ const Orders = () => {
             setOrders(ordRes.data);
             setEmployees(empRes.data);
             setCustomers(cusRes.data);
+
+            // Sync selected order if one is open
+            if (selectedOrder) {
+                const refreshed = ordRes.data.find(o => o.id === selectedOrder.id);
+                if (refreshed) setSelectedOrder(refreshed);
+            }
         } catch (err) {
             console.error(err);
         }
@@ -149,14 +155,26 @@ const Orders = () => {
 
     const handleEdit = (ord) => {
         const parsedMeasurements = ord.measurements_json ? JSON.parse(ord.measurements_json) : {};
+
+        // Extract assignments from assignments_data string
+        let cutterId = '';
+        let stitcherId = '';
+        if (ord.assignments_data) {
+            ord.assignments_data.split(',').forEach(pair => {
+                const [id, role] = pair.split(':');
+                if (role === 'Cutter') cutterId = id;
+                if (role === 'Stitcher') stitcherId = id;
+            });
+        }
+
         setFormData({
             customer_id: ord.customer_id,
             category: ord.category || 'Shirt',
             delivery_date: ord.delivery_date,
             advance_amount: ord.advance_amount,
             total_amount: ord.total_amount,
-            cutter_id: '',
-            stitcher_id: '',
+            cutter_id: cutterId,
+            stitcher_id: stitcherId,
             measurements: parsedMeasurements
         });
         setEditId(ord.id);
