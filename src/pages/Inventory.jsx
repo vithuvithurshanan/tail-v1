@@ -6,15 +6,15 @@ import {
     Plus,
     Search,
     AlertCircle,
-    RefreshCw,
-    MoreVertical,
     Trash2,
     Edit,
-    Printer
+    Printer,
+    Truck
 } from 'lucide-react';
 
 const Inventory = () => {
     const [items, setItems] = useState([]);
+    const [suppliers, setSuppliers] = useState([]);
     const [showAddModal, setShowAddModal] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [editId, setEditId] = useState(null);
@@ -22,14 +22,20 @@ const Inventory = () => {
         item_name: '',
         quantity: 0,
         min_level: 5,
-        unit: 'Meters'
+        unit: 'Meters',
+        supplier_id: '',
+        cost_price: ''
     });
     const [searchQuery, setSearchQuery] = useState('');
 
     const fetchInventory = async () => {
         try {
-            const res = await axios.get('http://localhost:3001/api/inventory');
-            setItems(res.data);
+            const [invRes, supRes] = await Promise.all([
+                axios.get('http://localhost:3001/api/inventory'),
+                axios.get('http://localhost:3001/api/suppliers')
+            ]);
+            setItems(invRes.data);
+            setSuppliers(supRes.data);
         } catch (err) {
             console.error(err);
         }
@@ -57,7 +63,7 @@ const Inventory = () => {
             setIsEditing(false);
             setEditId(null);
             fetchInventory();
-            setFormData({ item_name: '', quantity: 0, min_level: 5, unit: 'Meters' });
+            setFormData({ item_name: '', quantity: 0, min_level: 5, unit: 'Meters', supplier_id: '', cost_price: '' });
         } catch (err) {
             toast.error(err.response?.data?.error || `Error ${isEditing ? 'updating' : 'adding'} item`);
         }
@@ -68,7 +74,9 @@ const Inventory = () => {
             item_name: item.item_name || '',
             quantity: item.quantity ?? '',
             min_level: item.min_level ?? '',
-            unit: item.unit || 'Meters'
+            unit: item.unit || 'Meters',
+            supplier_id: item.supplier_id || '',
+            cost_price: item.cost_price || ''
         });
         setEditId(item.id);
         setIsEditing(true);
@@ -79,7 +87,7 @@ const Inventory = () => {
         setShowAddModal(false);
         setIsEditing(false);
         setEditId(null);
-        setFormData({ item_name: '', quantity: 0, min_level: 5, unit: 'Meters' });
+        setFormData({ item_name: '', quantity: 0, min_level: 5, unit: 'Meters', supplier_id: '', cost_price: '' });
     };
 
     const handleDelete = async (id) => {
@@ -146,10 +154,12 @@ const Inventory = () => {
 
                 <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm dark:shadow-none">
                     <div className="overflow-x-auto">
-                        <table className="w-full text-left min-w-[700px]">
+                        <table className="w-full text-left min-w-[800px]">
                             <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
                                 <tr>
                                     <th className="px-6 py-4 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase">Item Name</th>
+                                    <th className="px-6 py-4 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase">Supplier</th>
+                                    <th className="px-6 py-4 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase">Cost / Unit</th>
                                     <th className="px-6 py-4 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase">Quantity</th>
                                     <th className="px-6 py-4 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase">Min Level</th>
                                     <th className="px-6 py-4 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase">Status</th>
@@ -162,6 +172,18 @@ const Inventory = () => {
                                     return (
                                         <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
                                             <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">{item.item_name}</td>
+                                            <td className="px-6 py-4">
+                                                {item.supplier_name ? (
+                                                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-2 py-1 rounded-full">
+                                                        <Truck size={11} /> {item.supplier_name}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-xs text-slate-400 italic">No supplier</span>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 font-bold text-slate-700 dark:text-slate-200">
+                                                {item.cost_price > 0 ? `LKR ${Number(item.cost_price).toLocaleString()}` : <span className="text-slate-400 text-xs italic">—</span>}
+                                            </td>
                                             <td className="px-6 py-4 text-slate-700 dark:text-slate-200">
                                                 {item.quantity} <span className="text-slate-500 dark:text-slate-500 text-xs">{item.unit}</span>
                                             </td>
@@ -243,14 +265,39 @@ const Inventory = () => {
                                         </select>
                                     </div>
                                 </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="label-standard">Minimum Alert Level</label>
+                                        <input
+                                            type="number"
+                                            value={formData.min_level}
+                                            onChange={(e) => setFormData({ ...formData, min_level: e.target.value })}
+                                            className="input-standard"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="label-standard">Cost per Unit (LKR)</label>
+                                        <input
+                                            type="number"
+                                            placeholder="0.00"
+                                            value={formData.cost_price}
+                                            onChange={(e) => setFormData({ ...formData, cost_price: e.target.value })}
+                                            className="input-standard"
+                                        />
+                                    </div>
+                                </div>
                                 <div>
-                                    <label className="label-standard">Minimum Alert Level</label>
-                                    <input
-                                        type="number"
-                                        value={formData.min_level}
-                                        onChange={(e) => setFormData({ ...formData, min_level: e.target.value })}
-                                        className="input-standard"
-                                    />
+                                    <label className="label-standard flex items-center gap-1"><Truck size={13} /> Supplier</label>
+                                    <select
+                                        value={formData.supplier_id}
+                                        onChange={(e) => setFormData({ ...formData, supplier_id: e.target.value })}
+                                        className="input-standard cursor-pointer"
+                                    >
+                                        <option value="">No Supplier / Unknown</option>
+                                        {suppliers.map(s => (
+                                            <option key={s.id} value={s.id}>{s.name}</option>
+                                        ))}
+                                    </select>
                                 </div>
                                 <div className="pt-4">
                                     <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 py-4 rounded-xl font-bold text-white transition-all shadow-xl shadow-blue-500/20 uppercase tracking-[0.2em] text-[10px]">

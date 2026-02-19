@@ -8,6 +8,7 @@ import Finance from './pages/Finance';
 import Orders from './pages/Orders';
 import Login from './pages/Login';
 import Notifications from './pages/Notifications';
+import Suppliers from './pages/Suppliers';
 import { LogOut, Sun, Moon } from 'lucide-react';
 
 import {
@@ -20,7 +21,8 @@ import {
   Bell,
   Menu,
   X,
-  ShoppingBag
+  ShoppingBag,
+  Truck
 } from 'lucide-react';
 
 import { Toaster } from 'react-hot-toast';
@@ -127,6 +129,7 @@ const App = () => {
               <SidebarItem to="/employees" icon={Users} label={isSidebarOpen ? "Employees" : ""} isDarkMode={isDarkMode} />
               <SidebarItem to="/customers" icon={UserCircle} label={isSidebarOpen ? "Customers" : ""} isDarkMode={isDarkMode} />
               <SidebarItem to="/inventory" icon={Package} label={isSidebarOpen ? "Inventory" : ""} isDarkMode={isDarkMode} />
+              <SidebarItem to="/suppliers" icon={Truck} label={isSidebarOpen ? "Suppliers" : ""} isDarkMode={isDarkMode} />
               {user.role === 'admin' && <SidebarItem to="/finance" icon={CreditCard} label={isSidebarOpen ? "Finance" : ""} isDarkMode={isDarkMode} />}
               <SidebarItem to="/notifications" icon={Bell} label={isSidebarOpen ? "Alerts" : ""} isDarkMode={isDarkMode} />
             </nav>
@@ -205,6 +208,7 @@ const App = () => {
             <Route path="/employees" element={<Employees />} />
             <Route path="/customers" element={<Customers />} />
             <Route path="/inventory" element={<Inventory />} />
+            <Route path="/suppliers" element={<Suppliers />} />
             {user.role === 'admin' && <Route path="/finance" element={<Finance />} />}
             <Route path="/settings" element={<div className="p-8">Settings</div>} />
             <Route path="/notifications" element={<Notifications />} />

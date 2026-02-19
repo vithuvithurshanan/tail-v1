@@ -65,13 +65,25 @@ db.exec(`
     FOREIGN KEY (employee_id) REFERENCES employees(id)
   );
 
+  CREATE TABLE IF NOT EXISTS suppliers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    contact TEXT,
+    address TEXT,
+    notes TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
   CREATE TABLE IF NOT EXISTS inventory (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     item_name TEXT UNIQUE NOT NULL,
     quantity INTEGER DEFAULT 0,
     min_level INTEGER DEFAULT 5,
     unit TEXT,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    supplier_id INTEGER,
+    cost_price DECIMAL(10,2) DEFAULT 0,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (supplier_id) REFERENCES suppliers(id)
   );
 
   CREATE TABLE IF NOT EXISTS cheques (
@@ -104,5 +116,12 @@ db.exec(`
     FOREIGN KEY (employee_id) REFERENCES employees(id)
   );
 `);
+
+// Safely add new columns to existing inventory table (migration)
+try { db.exec('ALTER TABLE inventory ADD COLUMN supplier_id INTEGER REFERENCES suppliers(id)'); } catch (e) { }
+try { db.exec('ALTER TABLE inventory ADD COLUMN cost_price DECIMAL(10,2) DEFAULT 0'); } catch (e) { }
+
+// Safely add dress_color to orders (migration)
+try { db.exec("ALTER TABLE orders ADD COLUMN dress_color TEXT DEFAULT ''"); } catch (e) { }
 
 export default db;

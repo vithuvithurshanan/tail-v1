@@ -40,6 +40,7 @@ const Orders = () => {
     const [formData, setFormData] = useState({
         customer_id: '',
         category: 'Shirt',
+        dress_color: '',
         delivery_date: '',
         advance_amount: '',
         total_amount: '',
@@ -141,6 +142,7 @@ const Orders = () => {
             setFormData({
                 customer_id: '',
                 category: 'Shirt',
+                dress_color: '',
                 delivery_date: '',
                 advance_amount: '',
                 total_amount: '',
@@ -170,6 +172,7 @@ const Orders = () => {
         setFormData({
             customer_id: ord.customer_id,
             category: ord.category || 'Shirt',
+            dress_color: ord.dress_color || '',
             delivery_date: ord.delivery_date,
             advance_amount: ord.advance_amount,
             total_amount: ord.total_amount,
@@ -189,6 +192,7 @@ const Orders = () => {
         setFormData({
             customer_id: '',
             category: 'Shirt',
+            dress_color: '',
             delivery_date: '',
             advance_amount: '',
             total_amount: '',
@@ -324,6 +328,24 @@ const Orders = () => {
                                         <h4 className="text-xs font-bold text-slate-500 uppercase mb-2">Delivery Date</h4>
                                         <p className="font-bold text-lg text-slate-900 dark:text-white">{selectedOrder.delivery_date}</p>
                                     </div>
+                                    <div>
+                                        <h4 className="text-xs font-bold text-slate-500 uppercase mb-2">Dress Type</h4>
+                                        <p className="font-bold text-slate-900 dark:text-white">{selectedOrder.category}</p>
+                                    </div>
+                                    {selectedOrder.dress_color && (
+                                        <div className="text-right">
+                                            <h4 className="text-xs font-bold text-slate-500 uppercase mb-2">Dress Color</h4>
+                                            <div className="flex items-center justify-end gap-2">
+                                                {selectedOrder.dress_color.startsWith('#') && (
+                                                    <span
+                                                        className="w-5 h-5 rounded-full border border-slate-200 dark:border-slate-700 flex-shrink-0 inline-block"
+                                                        style={{ backgroundColor: selectedOrder.dress_color }}
+                                                    />
+                                                )}
+                                                <p className="font-bold text-slate-900 dark:text-white">{selectedOrder.dress_color}</p>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
 
@@ -413,6 +435,7 @@ const Orders = () => {
                                 <div className="mb-10 text-lg">
                                     <p><strong>Customer:</strong> {selectedOrder.customer_name}</p>
                                     <p><strong>Dress Category:</strong> {selectedOrder.category}</p>
+                                    {selectedOrder.dress_color && <p><strong>Dress Color:</strong> {selectedOrder.dress_color}</p>}
                                     <p><strong>Date:</strong> {new Date().toLocaleDateString()}</p>
                                     <p><strong>Expected Delivery:</strong> {selectedOrder.delivery_date}</p>
                                 </div>
@@ -471,6 +494,17 @@ const Orders = () => {
                                             <p className="text-sm font-bold uppercase text-gray-600">Category</p>
                                             <p className="text-xl font-bold">{selectedOrder.category}</p>
                                         </div>
+                                        {selectedOrder.dress_color && (
+                                            <div>
+                                                <p className="text-sm font-bold uppercase text-gray-600">Dress Color</p>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    {selectedOrder.dress_color.startsWith('#') && (
+                                                        <span className="w-6 h-6 rounded-full border-2 border-black inline-block flex-shrink-0" style={{ backgroundColor: selectedOrder.dress_color }} />
+                                                    )}
+                                                    <p className="text-xl font-bold">{selectedOrder.dress_color}</p>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="mb-10">
@@ -643,6 +677,27 @@ const Orders = () => {
                                         <option>Blouse</option>
                                         <option>Other</option>
                                     </select>
+                                </div>
+                            </div>
+
+                            {/* Dress Color */}
+                            <div>
+                                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Dress Color</label>
+                                <div className="flex gap-2 items-center">
+                                    <input
+                                        type="color"
+                                        value={formData.dress_color && formData.dress_color.startsWith('#') ? formData.dress_color : '#ffffff'}
+                                        onChange={(e) => setFormData({ ...formData, dress_color: e.target.value })}
+                                        className="w-10 h-10 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer p-0.5 bg-white dark:bg-slate-800 flex-shrink-0"
+                                        title="Pick a color"
+                                    />
+                                    <input
+                                        type="text"
+                                        placeholder="e.g. Navy Blue, Red, White..."
+                                        value={formData.dress_color}
+                                        onChange={(e) => setFormData({ ...formData, dress_color: e.target.value })}
+                                        className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white transition-all shadow-sm"
+                                    />
                                 </div>
                             </div>
 

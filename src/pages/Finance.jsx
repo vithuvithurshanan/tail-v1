@@ -284,14 +284,14 @@ const Finance = () => {
             {showAddModal && (
                 <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
                     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-md rounded-3xl overflow-hidden shadow-2xl">
-                        <div className="p-8 bg-blue-600 text-white flex justify-between items-center">
+                        <div className="p-5 bg-blue-600 text-white flex justify-between items-center">
                             <div>
-                                <h3 className="text-2xl font-bold tracking-tight">Record {activeTab === 'salaries' ? 'Salary' : activeTab === 'cheques' ? 'Cheque' : 'Expense'}</h3>
-                                <p className="text-blue-100 text-xs font-bold uppercase tracking-widest mt-1">Financial Entry</p>
+                                <h3 className="text-lg font-bold tracking-tight">Record {activeTab === 'salaries' ? 'Salary' : activeTab === 'cheques' ? 'Cheque' : 'Expense'}</h3>
+                                <p className="text-blue-100 text-xs font-bold uppercase tracking-widest mt-0.5">Financial Entry</p>
                             </div>
-                            <button onClick={() => setShowAddModal(false)} className="bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"><X size={24} /></button>
+                            <button onClick={() => setShowAddModal(false)} className="bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"><X size={20} /></button>
                         </div>
-                        <form onSubmit={handleSubmit} className="p-8 space-y-5">
+                        <form onSubmit={handleSubmit} className="p-5 space-y-3">
                             {activeTab === 'salaries' && (
                                 <>
                                     <div>
@@ -345,30 +345,40 @@ const Finance = () => {
 
                             {activeTab === 'cheques' && (
                                 <>
-                                    <div>
-                                        <label className="label-standard">Cheque Number</label>
-                                        <input type="text" placeholder="CHQ-0000" className="input-standard" onChange={e => setFormData({ ...formData, cheque_number: e.target.value })} required />
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="label-standard">Cheque Number</label>
+                                            <input type="text" placeholder="CHQ-0000" className="input-standard" onChange={e => setFormData({ ...formData, cheque_number: e.target.value })} required />
+                                        </div>
+                                        <div>
+                                            <label className="label-standard">Amount (LKR)</label>
+                                            <input type="number" placeholder="0.00" className="input-standard" onChange={e => setFormData({ ...formData, amount: e.target.value })} required />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="label-standard">Due Date</label>
+                                            <input type="date" className="input-standard" onChange={e => setFormData({ ...formData, due_date: e.target.value })} required />
+                                        </div>
+                                        <div>
+                                            <label className="label-standard">Receiver / Purpose</label>
+                                            <input type="text" placeholder="Vendor name..." className="input-standard" onChange={e => setFormData({ ...formData, given_to: e.target.value })} />
+                                        </div>
                                     </div>
                                     <div>
-                                        <label className="label-standard">Amount (LKR)</label>
-                                        <input type="number" placeholder="0.00" className="input-standard" onChange={e => setFormData({ ...formData, amount: e.target.value })} required />
-                                    </div>
-                                    <div>
-                                        <label className="label-standard">Due Date</label>
-                                        <input type="date" className="input-standard" onChange={e => setFormData({ ...formData, due_date: e.target.value })} required />
-                                    </div>
-                                    <div>
-                                        <label className="label-standard">Receiver / Purpose</label>
-                                        <input type="text" placeholder="Vendor name..." className="input-standard" onChange={e => setFormData({ ...formData, given_to: e.target.value })} />
-                                    </div>
-                                    <div className="border-4 border-dashed border-slate-100 dark:border-slate-800 p-8 rounded-3xl text-center hover:border-blue-600 transition-colors group">
-                                        <input type="file" id="file" className="hidden" onChange={e => setFile(e.target.files[0])} />
-                                        <label htmlFor="file" className="cursor-pointer flex flex-col items-center gap-3">
-                                            <div className="w-12 h-12 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                                <Upload size={24} className="text-slate-400" />
-                                            </div>
-                                            <span className="text-xs font-black uppercase tracking-widest text-slate-500">{file ? file.name : 'Click to Upload Proof'}</span>
-                                        </label>
+                                        <label className="label-standard">Proof (Optional)</label>
+                                        <div className="flex items-center gap-3">
+                                            <input type="file" id="file" className="hidden" onChange={e => setFile(e.target.files[0])} />
+                                            <label htmlFor="file" className="flex items-center gap-2 cursor-pointer bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-blue-500 rounded-lg px-4 py-2 text-sm font-bold text-slate-600 dark:text-slate-400 transition-all">
+                                                <Upload size={15} />
+                                                {file ? file.name : 'Upload Cheque Proof'}
+                                            </label>
+                                            {file && (
+                                                <button type="button" onClick={() => setFile(null)} className="text-rose-500 hover:text-rose-600 text-xs font-bold">
+                                                    Remove
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                 </>
                             )}
@@ -394,8 +404,8 @@ const Finance = () => {
                                     </div>
                                 </>
                             )}
-                            <div className="pt-6">
-                                <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 py-5 rounded-2xl font-black uppercase tracking-widest text-xs text-white shadow-xl shadow-blue-600/30 active:scale-[0.98] transition-all">Save Financial Entry</button>
+                            <div className="pt-3">
+                                <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-xl font-black uppercase tracking-widest text-xs text-white shadow-lg shadow-blue-600/20 active:scale-[0.98] transition-all">Save Financial Entry</button>
                             </div>
                         </form>
                     </div>

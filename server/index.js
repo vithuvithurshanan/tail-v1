@@ -139,17 +139,61 @@ app.get('/api/customers/:id/measurements', (req, res) => {
     }
 });
 
+// --- SUPPLIERS ---
+app.get('/api/suppliers', (req, res) => {
+    const suppliers = db.prepare('SELECT * FROM suppliers ORDER BY name ASC').all();
+    res.json(suppliers);
+});
+
+app.post('/api/suppliers', (req, res) => {
+    const { name, contact, address, notes } = req.body;
+    try {
+        const result = db.prepare('INSERT INTO suppliers (name, contact, address, notes) VALUES (?, ?, ?, ?)')
+            .run(name, contact, address, notes);
+        res.status(201).json({ id: result.lastInsertRowid, message: 'Supplier added' });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+app.patch('/api/suppliers/:id', (req, res) => {
+    const { id } = req.params;
+    const { name, contact, address, notes } = req.body;
+    try {
+        db.prepare('UPDATE suppliers SET name = ?, contact = ?, address = ?, notes = ? WHERE id = ?')
+            .run(name, contact, address, notes, id);
+        res.json({ message: 'Supplier updated' });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+app.delete('/api/suppliers/:id', (req, res) => {
+    const { id } = req.params;
+    try {
+        db.prepare('DELETE FROM suppliers WHERE id = ?').run(id);
+        res.json({ message: 'Supplier deleted' });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
 // --- INVENTORY ---
 app.get('/api/inventory', (req, res) => {
-    const items = db.prepare('SELECT * FROM inventory').all();
+    const items = db.prepare(`
+        SELECT i.*, s.name as supplier_name
+        FROM inventory i
+        LEFT JOIN suppliers s ON i.supplier_id = s.id
+        ORDER BY i.item_name ASC
+    `).all();
     res.json(items);
 });
 
 app.post('/api/inventory', (req, res) => {
-    const { item_name, quantity, min_level, unit } = req.body;
+    const { item_name, quantity, min_level, unit, supplier_id, cost_price } = req.body;
     try {
-        db.prepare('INSERT INTO inventory (item_name, quantity, min_level, unit) VALUES (?, ?, ?, ?)')
-            .run(item_name, quantity, min_level, unit);
+        db.prepare('INSERT INTO inventory (item_name, quantity, min_level, unit, supplier_id, cost_price) VALUES (?, ?, ?, ?, ?, ?)')
+            .run(item_name, quantity, min_level, unit, supplier_id || null, cost_price || 0);
         res.status(201).json({ message: 'Item added' });
     } catch (err) {
         res.status(400).json({ error: err.message });
@@ -158,10 +202,10 @@ app.post('/api/inventory', (req, res) => {
 
 app.patch('/api/inventory/:id', (req, res) => {
     const { id } = req.params;
-    const { item_name, quantity, min_level, unit } = req.body;
+    const { item_name, quantity, min_level, unit, supplier_id, cost_price } = req.body;
     try {
-        db.prepare('UPDATE inventory SET item_name = ?, quantity = ?, min_level = ?, unit = ? WHERE id = ?')
-            .run(item_name, quantity, min_level, unit, id);
+        db.prepare('UPDATE inventory SET item_name = ?, quantity = ?, min_level = ?, unit = ?, supplier_id = ?, cost_price = ? WHERE id = ?')
+            .run(item_name, quantity, min_level, unit, supplier_id || null, cost_price || 0, id);
         res.json({ message: 'Inventory updated' });
     } catch (err) {
         res.status(400).json({ error: err.message });
@@ -224,12 +268,12 @@ app.get('/api/orders', (req, res) => {
 });
 
 app.post('/api/orders', (req, res) => {
-    const { id, customer_id, delivery_date, total_amount, advance_amount, assignments, category, measurements_json } = req.body;
-    const insertOrder = db.prepare('INSERT INTO orders (id, customer_id, delivery_date, total_amount, advance_amount, category, measurements_json) VALUES (?, ?, ?, ?, ?, ?, ?)');
+    const { id, customer_id, delivery_date, total_amount, advance_amount, assignments, category, measurements_json, dress_color } = req.body;
+    const insertOrder = db.prepare('INSERT INTO orders (id, customer_id, delivery_date, total_amount, advance_amount, category, measurements_json, dress_color) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
     const insertAssign = db.prepare('INSERT INTO order_assignments (order_id, employee_id, role) VALUES (?, ?, ?)');
 
     const transaction = db.transaction(() => {
-        insertOrder.run(id, customer_id, delivery_date, total_amount, advance_amount, category, measurements_json);
+        insertOrder.run(id, customer_id, delivery_date, total_amount, advance_amount, category, measurements_json, dress_color || '');
         if (assignments) {
             for (const a of assignments) {
                 insertAssign.run(id, a.employee_id, a.role);
@@ -292,14 +336,14 @@ app.post('/api/finance/utilities', (req, res) => {
 
 app.patch('/api/orders/:id', (req, res) => {
     const { id } = req.params;
-    const { customer_id, delivery_date, total_amount, advance_amount, assignments, category, measurements_json } = req.body;
+    const { customer_id, delivery_date, total_amount, advance_amount, assignments, category, measurements_json, dress_color } = req.body;
 
-    const updateOrder = db.prepare('UPDATE orders SET customer_id = ?, delivery_date = ?, total_amount = ?, advance_amount = ?, category = ?, measurements_json = ? WHERE id = ?');
+    const updateOrder = db.prepare('UPDATE orders SET customer_id = ?, delivery_date = ?, total_amount = ?, advance_amount = ?, category = ?, measurements_json = ?, dress_color = ? WHERE id = ?');
     const deleteAssign = db.prepare('DELETE FROM order_assignments WHERE order_id = ?');
     const insertAssign = db.prepare('INSERT INTO order_assignments (order_id, employee_id, role) VALUES (?, ?, ?)');
 
     const transaction = db.transaction(() => {
-        updateOrder.run(customer_id, delivery_date, total_amount, advance_amount, category, measurements_json, id);
+        updateOrder.run(customer_id, delivery_date, total_amount, advance_amount, category, measurements_json, dress_color || '', id);
         deleteAssign.run(id);
         if (assignments) {
             for (const a of assignments) {
