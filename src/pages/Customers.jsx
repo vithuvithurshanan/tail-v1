@@ -301,7 +301,7 @@ const Customers = () => {
                 </div>
             ) : (
                 <div className="p-6 md:p-10 lg:p-12 w-full space-y-6 transition-all duration-300 animate-in fade-in">
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 print:hidden">
                         <div>
                             <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">Customers</h1>
                             <p className="text-slate-500 dark:text-slate-400">Manage customer profiles and historical records.</p>
@@ -352,7 +352,7 @@ const Customers = () => {
                         </table>
                     </div>
 
-                    <div className="relative mb-8 no-print">
+                    <div className="relative mb-8 print:hidden">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
                         <input
                             type="text"
@@ -363,7 +363,7 @@ const Customers = () => {
                         />
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 print:hidden">
                         {filteredCustomers.map((cus) => (
                             <div
                                 key={cus.id}
