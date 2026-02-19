@@ -91,6 +91,18 @@ db.exec(`
     due_date DATE NOT NULL,
     status TEXT DEFAULT 'Unpaid'
   );
+
+  CREATE TABLE IF NOT EXISTS employee_salaries (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    employee_id TEXT NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    month TEXT NOT NULL, -- e.g., 'October 2026'
+    payment_date DATE NOT NULL,
+    type TEXT DEFAULT 'Full Salary', -- Full Salary, Advance, Bonus
+    pay_period TEXT DEFAULT 'Monthly', -- Daily, Weekly, Monthly
+    notes TEXT,
+    FOREIGN KEY (employee_id) REFERENCES employees(id)
+  );
 `);
 
 export default db;

@@ -347,6 +347,34 @@ app.patch('/api/finance/cheques/:id/pay', (req, res) => {
     }
 });
 
+// --- SALARY MANAGEMENT ---
+app.get('/api/finance/salaries', (req, res) => {
+    try {
+        const salaries = db.prepare(`
+            SELECT s.*, e.name as employee_name 
+            FROM employee_salaries s
+            JOIN employees e ON s.employee_id = e.id
+            ORDER BY s.payment_date DESC
+        `).all();
+        res.json(salaries);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+app.post('/api/finance/salaries', (req, res) => {
+    const { employee_id, amount, month, payment_date, type, notes, pay_period } = req.body;
+    try {
+        db.prepare(`
+            INSERT INTO employee_salaries (employee_id, amount, month, payment_date, type, notes, pay_period)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        `).run(employee_id, amount, month, payment_date, type, notes, pay_period);
+        res.status(201).json({ message: 'Salary payment recorded' });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
 // --- DASHBOARD STATS ---
 app.get('/api/stats', (req, res) => {
     try {
