@@ -24,6 +24,7 @@ const Orders = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [editId, setEditId] = useState(null);
     const [selectedOrder, setSelectedOrder] = useState(null);
+    const [printType, setPrintType] = useState('invoice'); // 'invoice' or 'task'
     const [employees, setEmployees] = useState([]);
     const [customers, setCustomers] = useState([]);
 
@@ -213,8 +214,14 @@ const Orders = () => {
         }
     };
 
-    const handlePrint = () => {
-        window.print();
+    const handlePrintInvoice = () => {
+        setPrintType('invoice');
+        setTimeout(() => window.print(), 100);
+    };
+
+    const handlePrintTask = () => {
+        setPrintType('task');
+        setTimeout(() => window.print(), 100);
     };
 
     const handleMeasurementChange = (field, value) => {
@@ -248,10 +255,16 @@ const Orders = () => {
                                 <Edit size={20} /> Edit Order
                             </button>
                             <button
-                                onClick={handlePrint}
+                                onClick={handlePrintInvoice}
                                 className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-900 dark:text-white px-4 py-2 rounded-lg flex items-center gap-2 no-print transition-colors shadow-sm"
                             >
                                 <Printer size={20} /> Print Invoice
+                            </button>
+                            <button
+                                onClick={handlePrintTask}
+                                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 no-print transition-all shadow-lg shadow-blue-500/20 font-bold"
+                            >
+                                <CheckCircle2 size={20} /> Print Task Card
                             </button>
                             <button
                                 onClick={() => handleDeleteOrder(selectedOrder.id)}
@@ -291,18 +304,6 @@ const Orders = () => {
                                     </div>
                                 </div>
 
-                                {/* Measurements Section in Invoice */}
-                                <div className="mb-12">
-                                    <h4 className="text-xs font-bold text-slate-500 uppercase mb-4 border-b border-slate-100 dark:border-slate-800 pb-2">Measurements ({selectedOrder.category})</h4>
-                                    <div className="grid grid-cols-3 gap-4">
-                                        {selectedOrder.measurements_json && Object.entries(JSON.parse(selectedOrder.measurements_json)).map(([k, v]) => (
-                                            <div key={k} className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-100 dark:border-slate-800">
-                                                <p className="text-[10px] text-slate-500 uppercase font-bold">{k}</p>
-                                                <p className="text-slate-900 dark:text-white font-mono">{v}″</p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
 
                                 <div className="border-t border-slate-200 dark:border-slate-800 py-6 space-y-4">
                                     <div className="flex justify-between">
@@ -350,7 +351,7 @@ const Orders = () => {
                                                             <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{empId}</span>
                                                         </div>
                                                         <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
-                                                            <User size={14} />
+                                                            <User size={13} />
                                                         </div>
                                                     </div>
                                                 );
@@ -362,69 +363,117 @@ const Orders = () => {
                         </div>
                     </div>
 
-                    {/* Print only section */}
+                    {/* Print Section (Invoice or Task Card) */}
                     <div className="hidden print:block fixed inset-0 bg-white text-black p-12 z-[9999]">
-                        <div className="flex justify-between mb-20">
-                            <div>
-                                <h1 className="text-4xl font-black">Mannar Rajani Tailors</h1>
-                                <p>Main Street, Mannar</p>
-                                <p>+94 77 123 4567</p>
-                            </div>
-                            <div className="text-right">
-                                <h2 className="text-2xl font-bold">OFFICIAL INVOICE</h2>
-                                <p>No: {selectedOrder.id}</p>
-                            </div>
-                        </div>
-                        <div className="mb-10 text-lg">
-                            <p><strong>Customer:</strong> {selectedOrder.customer_name}</p>
-                            <p><strong>Dress Category:</strong> {selectedOrder.category}</p>
-                            <p><strong>Date:</strong> {new Date().toLocaleDateString()}</p>
-                            <p><strong>Expected Delivery:</strong> {selectedOrder.delivery_date}</p>
-                        </div>
-
-                        {/* Measurements in Print */}
-                        <div className="mb-10">
-                            <h3 className="text-xl font-bold mb-4 border-b-2 border-black pb-2">Measurements</h3>
-                            <div className="grid grid-cols-4 gap-6">
-                                {selectedOrder.measurements_json && Object.entries(JSON.parse(selectedOrder.measurements_json)).map(([k, v]) => (
-                                    <div key={k} className="border-b border-black/20 pb-1">
-                                        <p className="text-[10px] uppercase font-bold">{k}</p>
-                                        <p className="text-lg font-mono">{v}″</p>
+                        {printType === 'invoice' ? (
+                            <>
+                                <div className="flex justify-between mb-20">
+                                    <div>
+                                        <h1 className="text-4xl font-black">Mannar Rajani Tailors</h1>
+                                        <p>Main Street, Mannar</p>
+                                        <p>+94 77 123 4567</p>
                                     </div>
-                                ))}
-                            </div>
-                        </div>
+                                    <div className="text-right">
+                                        <h2 className="text-2xl font-bold">OFFICIAL INVOICE</h2>
+                                        <p>No: {selectedOrder.id}</p>
+                                    </div>
+                                </div>
+                                <div className="mb-10 text-lg">
+                                    <p><strong>Customer:</strong> {selectedOrder.customer_name}</p>
+                                    <p><strong>Dress Category:</strong> {selectedOrder.category}</p>
+                                    <p><strong>Date:</strong> {new Date().toLocaleDateString()}</p>
+                                    <p><strong>Expected Delivery:</strong> {selectedOrder.delivery_date}</p>
+                                </div>
 
-                        <table className="w-full text-left mb-20 border-collapse">
-                            <thead>
-                                <tr className="border-b-2 border-black">
-                                    <th className="py-2">Description</th>
-                                    <th className="py-2 text-right">Amount</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr className="border-b border-gray-300">
-                                    <td className="py-4">Tailoring Order ({selectedOrder.category})</td>
-                                    <td className="py-4 text-right">LKR {selectedOrder.total_amount?.toLocaleString()}</td>
-                                </tr>
-                                <tr>
-                                    <td className="py-4 font-bold">Total</td>
-                                    <td className="py-4 text-right font-bold">LKR {selectedOrder.total_amount?.toLocaleString()}</td>
-                                </tr>
-                                <tr>
-                                    <td className="py-4 font-bold">Advance Paid</td>
-                                    <td className="py-4 text-right font-bold">LKR {selectedOrder.advance_amount?.toLocaleString()}</td>
-                                </tr>
-                                <tr className="text-xl">
-                                    <td className="py-4 font-black">Balance Due</td>
-                                    <td className="py-4 text-right font-black">LKR {(selectedOrder.total_amount - selectedOrder.advance_amount).toLocaleString()}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <div className="mt-40 flex justify-between">
-                            <div className="border-t border-black w-48 text-center pt-2">Authorized Sign</div>
-                            <div className="border-t border-black w-48 text-center pt-2">Customer Sign</div>
-                        </div>
+                                <table className="w-full text-left mb-20 border-collapse">
+                                    <thead>
+                                        <tr className="border-b-2 border-black">
+                                            <th className="py-2">Description</th>
+                                            <th className="py-2 text-right">Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr className="border-b border-gray-300">
+                                            <td className="py-4">Tailoring Order ({selectedOrder.category})</td>
+                                            <td className="py-4 text-right">LKR {selectedOrder.total_amount?.toLocaleString()}</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="py-4 font-bold">Total</td>
+                                            <td className="py-4 text-right font-bold">LKR {selectedOrder.total_amount?.toLocaleString()}</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="py-4 font-bold">Advance Paid</td>
+                                            <td className="py-4 text-right font-bold">LKR {selectedOrder.advance_amount?.toLocaleString()}</td>
+                                        </tr>
+                                        <tr className="text-xl">
+                                            <td className="py-4 font-black">Balance Due</td>
+                                            <td className="py-4 text-right font-black">LKR {(selectedOrder.total_amount - selectedOrder.advance_amount).toLocaleString()}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <div className="mt-40 flex justify-between">
+                                    <div className="border-t border-black w-48 text-center pt-2">Authorized Sign</div>
+                                    <div className="border-t border-black w-48 text-center pt-2">Customer Sign</div>
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <div className="border-4 border-black p-8">
+                                    <div className="flex justify-between items-center border-b-4 border-black pb-4 mb-8">
+                                        <div>
+                                            <h1 className="text-3xl font-black uppercase">Production Job Card</h1>
+                                            <p className="text-xl font-bold">ORDER ID: {selectedOrder.id}</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="font-bold">Delivery Date</p>
+                                            <p className="text-xl font-black border-2 border-black px-4 py-2 inline-block mt-2">{selectedOrder.delivery_date}</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-10 mb-10">
+                                        <div>
+                                            <p className="text-sm font-bold uppercase text-gray-600">Customer</p>
+                                            <p className="text-xl font-bold">{selectedOrder.customer_name}</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-sm font-bold uppercase text-gray-600">Category</p>
+                                            <p className="text-xl font-bold">{selectedOrder.category}</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="mb-10">
+                                        <h3 className="text-xl font-bold mb-4 bg-black text-white px-4 py-1 inline-block">MEASUREMENTS</h3>
+                                        <div className="grid grid-cols-4 gap-6">
+                                            {selectedOrder.measurements_json && Object.entries(JSON.parse(selectedOrder.measurements_json)).map(([k, v]) => (
+                                                <div key={k} className="border-b-2 border-black/30 pb-1">
+                                                    <p className="text-xs uppercase font-bold">{k}</p>
+                                                    <p className="text-2xl font-mono font-black">{v || '-'}″</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 gap-6 pt-6 border-t-4 border-black">
+                                        <h3 className="text-xl font-bold bg-black text-white px-4 py-1 inline-block w-fit">ASSIGNED TEAM</h3>
+                                        <div className="grid grid-cols-2 gap-8">
+                                            {selectedOrder.assignments_data ? selectedOrder.assignments_data.split(',').map((pair, idx) => {
+                                                const [empId, role] = pair.split(':');
+                                                return (
+                                                    <div key={idx} className="border-2 border-black p-4">
+                                                        <p className="text-xs font-bold uppercase opacity-60">{role}</p>
+                                                        <p className="text-2xl font-black">{empId}</p>
+                                                    </div>
+                                                );
+                                            }) : <p className="text-xl italic">No team members assigned</p>}
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-20 pt-10 border-t-2 border-dashed border-black">
+                                        <p className="font-bold text-center italic text-gray-600">Please return this card with the finished garment.</p>
+                                    </div>
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
             ) : (
