@@ -11,7 +11,8 @@ import {
     ClipboardList,
     Plus,
     X,
-    ShoppingBag
+    ShoppingBag,
+    Printer
 } from 'lucide-react';
 
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -126,13 +127,103 @@ const Attendance = () => {
                         {todayFormatted}
                     </p>
                 </div>
-                <button onClick={fetchData} disabled={loading} className="btn-secondary">
-                    <RefreshCw size={18} className={loading ? 'animate-spin' : ''} /> Refresh
-                </button>
+                <div className="flex gap-3">
+                    <button onClick={() => window.print()} className="btn-secondary no-print">
+                        <Printer size={18} /> Print
+                    </button>
+                    <button onClick={fetchData} disabled={loading} className="btn-secondary no-print">
+                        <RefreshCw size={18} className={loading ? 'animate-spin' : ''} /> Refresh
+                    </button>
+                </div>
+            </div>
+
+            {/* Print Only Content */}
+            <div className="print-only">
+                <div className="print-header">
+                    <h1 className="text-2xl font-bold text-center">Rajani Tailors - Attendance Sheet</h1>
+                    <p className="text-center">{activeView === 'today' ? `Date: ${todayFormatted}` : `Week: ${weeklyData.weekStart} to ${weeklyData.weekEnd}`}</p>
+                </div>
+
+                {activeView === 'today' ? (
+                    <table className="w-full border-collapse border border-slate-300 mt-8">
+                        <thead>
+                            <tr className="bg-slate-100">
+                                <th className="border p-2 text-left">#</th>
+                                <th className="border p-2 text-left">Employee ID</th>
+                                <th className="border p-2 text-left">Name</th>
+                                <th className="border p-2 text-left">Category</th>
+                                <th className="border p-2 text-center">Status</th>
+                                <th className="border p-2 text-center">Tasks</th>
+                                <th className="border p-2 text-left">Orders Worked</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {todayData.employees.map((emp, idx) => (
+                                <tr key={emp.id}>
+                                    <td className="border p-2">{idx + 1}</td>
+                                    <td className="border p-2 font-mono">{emp.id}</td>
+                                    <td className="border p-2 font-bold">{emp.name}</td>
+                                    <td className="border p-2">{emp.category}</td>
+                                    <td className="border p-2 text-center font-bold">{emp.status || '—'}</td>
+                                    <td className="border p-2 text-center font-bold">{emp.tasks_completed || 0}</td>
+                                    <td className="border p-2 text-sm">
+                                        {emp.task_entries?.map(t => t.order_id).join(', ') || '—'}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                        <tfoot>
+                            <tr className="bg-slate-50 font-bold">
+                                <td className="border p-2" colSpan="4">Total</td>
+                                <td className="border p-2 text-center">P:{presentToday} H:{halfDayToday} A:{absentToday}</td>
+                                <td className="border p-2 text-center">{totalTasksToday}</td>
+                                <td className="border p-2"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                ) : (
+                    <table className="w-full border-collapse border border-slate-300 mt-8">
+                        <thead>
+                            <tr className="bg-slate-100">
+                                <th className="border p-2 text-left">Employee</th>
+                                <th className="border p-2 text-left">ID</th>
+                                {DAY_LABELS.map(d => (
+                                    <th key={d} className="border p-2 text-center">{d}</th>
+                                ))}
+                                <th className="border p-2 text-center">Days</th>
+                                <th className="border p-2 text-center">Tasks</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {weeklyData.employees?.map(emp => (
+                                <tr key={emp.id}>
+                                    <td className="border p-2 font-bold">{emp.name}</td>
+                                    <td className="border p-2 font-mono text-sm">{emp.id}</td>
+                                    {emp.days.map((day, i) => {
+                                        const isFuture = new Date(day.date) > new Date();
+                                        return (
+                                            <td key={i} className="border p-2 text-center">
+                                                {isFuture ? '—' : day.status === 'Present' ? '✓' : day.status === 'Half-Day' ? '½' : day.status === 'Absent' ? '✗' : '·'}
+                                                {!isFuture && day.tasks > 0 && ` (${day.tasks})`}
+                                            </td>
+                                        );
+                                    })}
+                                    <td className="border p-2 text-center font-bold">{emp.totalDays}</td>
+                                    <td className="border p-2 text-center font-bold">{emp.totalTasks}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                )}
+
+                <div className="mt-8 text-sm text-slate-500">
+                    <p>✓ = Present | ½ = Half-Day | ✗ = Absent | (n) = Tasks completed</p>
+                    <p className="mt-2">Printed on: {new Date().toLocaleString()}</p>
+                </div>
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 no-print">
                 <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-xl shadow-sm">
                     <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Present</p>
                     <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400">{presentToday}</p>
@@ -152,7 +243,7 @@ const Attendance = () => {
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-2 p-1 bg-slate-100 dark:bg-slate-800/50 rounded-xl w-fit">
+            <div className="flex gap-2 p-1 bg-slate-100 dark:bg-slate-800/50 rounded-xl w-fit no-print">
                 <button
                     onClick={() => setActiveView('today')}
                     className={`px-6 py-2 rounded-lg font-bold text-xs uppercase tracking-widest transition-all flex items-center gap-2 ${activeView === 'today' ? 'bg-white dark:bg-slate-900 text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
@@ -169,7 +260,7 @@ const Attendance = () => {
 
             {/* Today's Attendance + Tasks */}
             {activeView === 'today' && (
-                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm no-print">
                     {todayData.employees.length === 0 ? (
                         <div className="p-12 text-center text-slate-400 italic">No employees found. Add employees first.</div>
                     ) : (
@@ -180,15 +271,15 @@ const Attendance = () => {
                                         {/* Employee Info */}
                                         <div className="flex items-center gap-4 min-w-0 flex-shrink-0">
                                             <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg flex-shrink-0 ${emp.status === 'Present' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600' :
-                                                    emp.status === 'Absent' ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-600' :
-                                                        emp.status === 'Half-Day' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600' :
-                                                            'bg-slate-100 dark:bg-slate-800 text-slate-400'
+                                                emp.status === 'Absent' ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-600' :
+                                                    emp.status === 'Half-Day' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600' :
+                                                        'bg-slate-100 dark:bg-slate-800 text-slate-400'
                                                 }`}>
                                                 {emp.name[0].toUpperCase()}
                                             </div>
                                             <div className="min-w-0">
                                                 <p className="font-bold text-slate-900 dark:text-white truncate">{emp.name}</p>
-                                                <p className="text-xs text-slate-500 dark:text-slate-400">{emp.category}</p>
+                                                <p className="text-xs text-slate-500 dark:text-slate-400"><span className="font-mono">{emp.id}</span> • {emp.category}</p>
                                             </div>
                                         </div>
 
@@ -205,8 +296,8 @@ const Attendance = () => {
                                             {/* Status Badge */}
                                             {emp.marked && (
                                                 <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider hidden sm:inline-block ${emp.status === 'Present' ? 'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' :
-                                                        emp.status === 'Absent' ? 'bg-rose-100 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400' :
-                                                            'bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                                                    emp.status === 'Absent' ? 'bg-rose-100 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400' :
+                                                        'bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400'
                                                     }`}>
                                                     {emp.status}
                                                 </span>
@@ -264,7 +355,7 @@ const Attendance = () => {
 
             {/* Weekly View */}
             {activeView === 'weekly' && (
-                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm no-print">
                     <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/30 flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <Calendar size={16} className="text-blue-500" />
@@ -307,7 +398,7 @@ const Attendance = () => {
                                                 </div>
                                                 <div>
                                                     <p className="font-bold text-slate-900 dark:text-white text-sm">{emp.name}</p>
-                                                    <p className="text-[10px] text-slate-500">{emp.category}</p>
+                                                    <p className="text-[10px] text-slate-500"><span className="font-mono">{emp.id}</span> • {emp.category}</p>
                                                 </div>
                                             </div>
                                         </td>
@@ -346,8 +437,8 @@ const Attendance = () => {
                                         })}
                                         <td className="px-3 py-3 text-center">
                                             <span className={`inline-flex items-center justify-center min-w-[2.2rem] px-2 py-1 rounded-full font-black text-sm ${emp.totalDays >= 5 ? 'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600' :
-                                                    emp.totalDays >= 3 ? 'bg-blue-100 dark:bg-blue-500/10 text-blue-600' :
-                                                        'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                                                emp.totalDays >= 3 ? 'bg-blue-100 dark:bg-blue-500/10 text-blue-600' :
+                                                    'bg-slate-100 dark:bg-slate-800 text-slate-500'
                                                 }`}>
                                                 {emp.totalDays}
                                             </span>
@@ -406,9 +497,9 @@ const Attendance = () => {
                                                         <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[9px] font-black uppercase rounded-full">Assigned</span>
                                                     ) : null}
                                                     <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${order.status === 'Cutting' ? 'bg-amber-100 text-amber-600' :
-                                                            order.status === 'Stitching' ? 'bg-purple-100 text-purple-600' :
-                                                                order.status === 'Finished' ? 'bg-emerald-100 text-emerald-600' :
-                                                                    'bg-slate-100 text-slate-500'
+                                                        order.status === 'Stitching' ? 'bg-purple-100 text-purple-600' :
+                                                            order.status === 'Finished' ? 'bg-emerald-100 text-emerald-600' :
+                                                                'bg-slate-100 text-slate-500'
                                                         }`}>{order.status}</span>
                                                 </div>
                                                 <p className="text-sm text-slate-600 dark:text-slate-400 truncate">{order.customer_name} • {order.category}</p>
