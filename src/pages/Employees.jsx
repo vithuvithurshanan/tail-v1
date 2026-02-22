@@ -440,7 +440,7 @@ const Employees = () => {
                                     rows={2}
                                     value={formData.address}
                                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                                    className="input-standard font-medium text-base h-32"
+                                    className="input-standard font-medium text-base h-20"
                                 />
                             </div>
                             <div className="pt-6 flex gap-4">

@@ -22,8 +22,12 @@ const Login = ({ onLogin }) => {
             <div className="max-w-md w-full">
                 {/* Logo Section */}
                 <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-blue-600 shadow-xl shadow-blue-500/20 dark:shadow-blue-900/40 mb-4 transform -rotate-12 transition-transform hover:rotate-0 duration-300">
-                        <Scissors className="text-white" size={40} />
+                    <div className="inline-flex items-center justify-center w-24 h-24 rounded-3xl bg-white shadow-xl shadow-blue-500/10 dark:shadow-blue-900/20 mb-4 overflow-hidden border-4 border-white dark:border-slate-800 transform -rotate-12 transition-transform hover:rotate-0 duration-300">
+                        <img
+                            src="/logo.jpg"
+                            alt="Rajani Tailors Logo"
+                            className="w-full h-full object-cover"
+                        />
                     </div>
                     <h1 className="text-4xl font-black text-slate-900 dark:text-white mb-2 tracking-tight">Rajani Tailors</h1>
                     <p className="text-slate-500 dark:text-slate-500 font-medium">Management System Portal</p>
