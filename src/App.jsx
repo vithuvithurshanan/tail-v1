@@ -105,14 +105,31 @@ const App = () => {
           )}
         >
           <div className="flex flex-col h-full">
-            <div className="p-6 flex items-center justify-between">
-              {isSidebarOpen && (
-                <span className={cn(
-                  "text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r",
-                  isDarkMode ? "from-blue-400 to-indigo-500" : "from-blue-600 to-indigo-700"
-                )}>
-                  Rajani Tailors
-                </span>
+            <div className="p-6 flex items-center justify-between gap-3">
+              {isSidebarOpen ? (
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg overflow-hidden shadow-md ring-2 ring-blue-500/10">
+                    <img
+                      src="/logo.jpg"
+                      alt="Rajani Tailors Logo"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <span className={cn(
+                    "text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r",
+                    isDarkMode ? "from-blue-400 to-indigo-500" : "from-blue-600 to-indigo-700"
+                  )}>
+                    Rajani
+                  </span>
+                </div>
+              ) : (
+                <div className="w-10 h-10 rounded-lg overflow-hidden shadow-md ring-2 ring-blue-500/10 transition-all duration-300 transform hover:scale-110">
+                  <img
+                    src="/logo.jpg"
+                    alt="Logo"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
               )}
               <button
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
