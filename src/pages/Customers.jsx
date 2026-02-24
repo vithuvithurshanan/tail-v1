@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { customerService, measurementService } from '../services/db';
 import toast from 'react-hot-toast';
 import {
     Plus,
@@ -55,8 +55,8 @@ const Customers = () => {
 
     const fetchCustomers = async () => {
         try {
-            const res = await axios.get('http://localhost:3001/api/customers');
-            setCustomers(res.data);
+            const data = await customerService.getAll();
+            setCustomers(data);
         } catch (err) {
             console.error(err);
         }
@@ -68,12 +68,12 @@ const Customers = () => {
 
     const fetchCustomerHistory = async (id) => {
         try {
-            const [ordersRes, measureRes] = await Promise.all([
-                axios.get(`http://localhost:3001/api/customers/${id}/orders`),
-                axios.get(`http://localhost:3001/api/customers/${id}/measurements`)
+            const [orders, measurements] = await Promise.all([
+                customerService.getOrders(id),
+                customerService.getMeasurements(id)
             ]);
-            setCustomerOrders(ordersRes.data);
-            setCustomerMeasurements(measureRes.data);
+            setCustomerOrders(orders);
+            setCustomerMeasurements(measurements);
         } catch (err) {
             console.error("Error fetching history:", err);
             toast.error("Failed to load customer history");
@@ -95,11 +95,11 @@ const Customers = () => {
         e.preventDefault();
         try {
             if (isEditing) {
-                await axios.patch(`http://localhost:3001/api/customers/${editId}`, formData);
+                await customerService.update(editId, formData);
                 toast.success('Customer updated successfully!');
             } else {
                 const id = 'CUS' + Date.now().toString().slice(-4);
-                await axios.post('http://localhost:3001/api/customers', { ...formData, id });
+                await customerService.add(id, formData);
                 toast.success('Customer profile created!');
             }
             setShowAddModal(false);
@@ -111,7 +111,7 @@ const Customers = () => {
             }
             setFormData({ name: '', contact: '', address: '' });
         } catch (err) {
-            toast.error(err.response?.data?.error || `Error ${isEditing ? 'updating' : 'creating'} customer`);
+            toast.error(err.message || `Error ${isEditing ? 'updating' : 'creating'} customer`);
         }
     };
 
@@ -136,22 +136,22 @@ const Customers = () => {
     const handleDelete = async (id) => {
         if (!window.confirm("Are you sure you want to delete this customer?")) return;
         try {
-            await axios.delete(`http://localhost:3001/api/customers/${id}`);
+            await customerService.delete(id);
             toast.success('Customer deleted successfully!');
             if (viewingDetails?.id === id) setViewingDetails(null);
             fetchCustomers();
         } catch (err) {
-            toast.error(err.response?.data?.error || "Error deleting customer");
+            toast.error(err.message || "Error deleting customer");
         }
     };
 
     const handleMeasurementSubmit = async (e) => {
         e.preventDefault();
         try {
-            await axios.post('http://localhost:3001/api/measurements', {
+            await measurementService.save({
                 customer_id: selectedCustomer.id,
                 category: measurementData.category,
-                values_json: measurementData.values
+                values_json: JSON.stringify(measurementData.values)
             });
             toast.success(`Measurements saved for ${selectedCustomer.name}`);
             setShowMeasurementModal(false);
@@ -159,7 +159,7 @@ const Customers = () => {
                 fetchCustomerHistory(selectedCustomer.id);
             }
         } catch (err) {
-            toast.error(err.response?.data?.error || "Error saving measurements");
+            toast.error(err.message || "Error saving measurements");
         }
     };
 

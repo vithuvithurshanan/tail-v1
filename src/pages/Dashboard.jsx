@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { statsService } from '../services/db';
 import {
     Users,
     UserCircle,
@@ -56,8 +56,8 @@ const Dashboard = () => {
 
     const fetchStats = async () => {
         try {
-            const res = await axios.get('http://localhost:3001/api/stats');
-            setStats(res.data);
+            const data = await statsService.getStats();
+            setStats(data);
         } catch (err) {
             console.error("Error fetching stats:", err);
         }

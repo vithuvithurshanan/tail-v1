@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { financeService, employeeService } from '../services/db';
 import toast from 'react-hot-toast';
 import {
     CreditCard,
@@ -41,16 +41,16 @@ const Finance = () => {
 
     const fetchData = async () => {
         try {
-            const [chqRes, utlRes, salRes, empRes] = await Promise.all([
-                axios.get('http://localhost:3001/api/finance/cheques'),
-                axios.get('http://localhost:3001/api/finance/utilities'),
-                axios.get('http://localhost:3001/api/finance/salaries'),
-                axios.get('http://localhost:3001/api/employees')
+            const [chequesData, utilitiesData, salariesData, employeesData] = await Promise.all([
+                financeService.getCheques(),
+                financeService.getUtilities(),
+                financeService.getSalaries(),
+                employeeService.getAll()
             ]);
-            setCheques(chqRes.data);
-            setUtilities(utlRes.data);
-            setSalaries(salRes.data);
-            setEmployees(empRes.data);
+            setCheques(chequesData);
+            setUtilities(utilitiesData);
+            setSalaries(salariesData);
+            setEmployees(employeesData);
         } catch (err) {
             console.error("Fetch history error:", err);
             toast.error("Failed to load financial records or employees");
@@ -65,17 +65,16 @@ const Finance = () => {
         e.preventDefault();
         try {
             if (activeTab === 'cheques') {
-                const data = new FormData();
-                data.append('cheque_number', formData.cheque_number);
-                data.append('amount', formData.amount);
-                data.append('due_date', formData.due_date);
-                data.append('given_to', formData.given_to);
-                if (file) data.append('proof', file);
-                await axios.post('http://localhost:3001/api/finance/cheques', data);
+                await financeService.addCheque({
+                    cheque_number: formData.cheque_number,
+                    amount: formData.amount,
+                    due_date: formData.due_date,
+                    given_to: formData.given_to
+                });
             } else if (activeTab === 'utilities') {
-                await axios.post('http://localhost:3001/api/finance/utilities', formData);
+                await financeService.addUtility(formData);
             } else if (activeTab === 'salaries') {
-                await axios.post('http://localhost:3001/api/finance/salaries', {
+                await financeService.addSalary({
                     employee_id: formData.employee_id,
                     amount: formData.amount,
                     month: formData.month,
@@ -109,11 +108,11 @@ const Finance = () => {
 
     const handlePayUtility = async (id) => {
         try {
-            await axios.patch(`http://localhost:3001/api/finance/utilities/${id}/pay`);
+            await financeService.payUtility(id);
             toast.success('Bill marked as paid!');
             fetchData();
         } catch (err) {
-            toast.error(err.response?.data?.error || err.message);
+            toast.error(err.message);
         }
     };
 
@@ -240,9 +239,7 @@ const Finance = () => {
                                         </td>
                                         <td className="px-8 py-4 text-right">
                                             {chq.proof_path && (
-                                                <a href={`http://localhost:3001${chq.proof_path}`} target="_blank" className="text-blue-600 dark:text-blue-400 hover:scale-110 transition-transform inline-block">
-                                                    <ImageIcon size={20} />
-                                                </a>
+                                                <span className="text-slate-400 italic text-[10px]">Proof attached</span>
                                             )}
                                         </td>
                                     </tr>

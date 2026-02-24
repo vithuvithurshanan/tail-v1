@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { supplierService, inventoryService } from '../services/db';
 import toast from 'react-hot-toast';
 import {
     Truck,
@@ -33,12 +33,12 @@ const Suppliers = () => {
 
     const fetchData = async () => {
         try {
-            const [supRes, invRes] = await Promise.all([
-                axios.get('http://localhost:3001/api/suppliers'),
-                axios.get('http://localhost:3001/api/inventory')
+            const [suppliersData, inventoryData] = await Promise.all([
+                supplierService.getAll(),
+                inventoryService.getAll()
             ]);
-            setSuppliers(supRes.data);
-            setInventory(invRes.data);
+            setSuppliers(suppliersData);
+            setInventory(inventoryData);
         } catch (err) {
             console.error(err);
             toast.error('Failed to load supplier data');
@@ -62,16 +62,16 @@ const Suppliers = () => {
         e.preventDefault();
         try {
             if (isEditing) {
-                await axios.patch(`http://localhost:3001/api/suppliers/${editId}`, formData);
+                await supplierService.update(editId, formData);
                 toast.success('Supplier updated successfully!');
             } else {
-                await axios.post('http://localhost:3001/api/suppliers', formData);
+                await supplierService.add(formData);
                 toast.success('Supplier added successfully!');
             }
             closeModal();
             fetchData();
         } catch (err) {
-            toast.error(err.response?.data?.error || 'Error saving supplier');
+            toast.error(err.message || 'Error saving supplier');
         }
     };
 
@@ -95,12 +95,12 @@ const Suppliers = () => {
             if (!window.confirm('Delete this supplier?')) return;
         }
         try {
-            await axios.delete(`http://localhost:3001/api/suppliers/${id}`);
+            await supplierService.delete(id);
             toast.success('Supplier deleted');
             if (selectedSupplier?.id === id) setSelectedSupplier(null);
             fetchData();
         } catch (err) {
-            toast.error(err.response?.data?.error || 'Error deleting supplier');
+            toast.error(err.message || 'Error deleting supplier');
         }
     };
 

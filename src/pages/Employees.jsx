@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { employeeService } from '../services/db';
 import toast from 'react-hot-toast';
 import {
     Plus,
@@ -43,8 +43,8 @@ const Employees = () => {
 
     const fetchEmployees = async () => {
         try {
-            const res = await axios.get('http://localhost:3001/api/employees');
-            setEmployees(res.data);
+            const data = await employeeService.getAll();
+            setEmployees(data);
         } catch (err) {
             console.error(err);
         }
@@ -56,8 +56,8 @@ const Employees = () => {
 
     const fetchEmployeeAssignments = async (id) => {
         try {
-            const res = await axios.get(`http://localhost:3001/api/employees/${id}/assignments`);
-            setAssignments(res.data);
+            const data = await employeeService.getAssignments(id);
+            setAssignments(data);
         } catch (err) {
             console.error(err);
         }
@@ -79,11 +79,11 @@ const Employees = () => {
         e.preventDefault();
         try {
             if (isEditing) {
-                await axios.patch(`http://localhost:3001/api/employees/${editId}`, formData);
+                await employeeService.update(editId, formData);
                 toast.success('Employee updated successfully!');
             } else {
                 const id = 'EMP' + Date.now().toString().slice(-3);
-                await axios.post('http://localhost:3001/api/employees', { ...formData, id });
+                await employeeService.add(id, formData);
                 toast.success('Employee added successfully!');
             }
             setShowAddModal(false);
@@ -95,7 +95,7 @@ const Employees = () => {
             }
             setFormData({ name: '', age: '', contact: '', address: '', category: 'Stitching Master' });
         } catch (err) {
-            toast.error(err.response?.data?.error || `Error ${isEditing ? 'updating' : 'adding'} employee`);
+            toast.error(err.message || `Error ${isEditing ? 'updating' : 'adding'} employee`);
         }
     };
 
@@ -117,12 +117,12 @@ const Employees = () => {
         if (e) e.stopPropagation();
         if (!window.confirm("Are you sure you want to delete this employee?")) return;
         try {
-            await axios.delete(`http://localhost:3001/api/employees/${id}`);
+            await employeeService.delete(id);
             toast.success('Employee deleted successfully!');
             if (viewingDetails?.id === id) setViewingDetails(null);
             fetchEmployees();
         } catch (err) {
-            toast.error(err.response?.data?.error || "Error deleting employee");
+            toast.error(err.message || "Error deleting employee");
         }
     };
 

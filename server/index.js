@@ -3,7 +3,7 @@ import cors from 'cors';
 import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import db from './database.js';
+import db from './firebase.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -25,38 +25,44 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // --- EMPLOYEES ---
-app.get('/api/employees', (req, res) => {
-    const employees = db.prepare('SELECT * FROM employees ORDER BY created_at DESC').all();
-    res.json(employees);
+app.get('/api/employees', async (req, res) => {
+    try {
+        const snapshot = await db.collection('employees').orderBy('created_at', 'desc').get();
+        const employees = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+        res.json(employees);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
-app.post('/api/employees', (req, res) => {
+app.post('/api/employees', async (req, res) => {
     const { id, name, age, contact, address, category } = req.body;
     try {
-        db.prepare('INSERT INTO employees (id, name, age, contact, address, category) VALUES (?, ?, ?, ?, ?, ?)')
-            .run(id, name, age, contact, address, category);
+        await db.collection('employees').doc(id).set({
+            name, age, contact, address, category,
+            created_at: new Date().toISOString()
+        });
         res.status(201).json({ id, message: 'Employee added' });
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
 });
 
-app.patch('/api/employees/:id', (req, res) => {
+app.patch('/api/employees/:id', async (req, res) => {
     const { id } = req.params;
     const { name, age, contact, address, category } = req.body;
     try {
-        db.prepare('UPDATE employees SET name = ?, age = ?, contact = ?, address = ?, category = ? WHERE id = ?')
-            .run(name, age, contact, address, category, id);
+        await db.collection('employees').doc(id).update({ name, age, contact, address, category });
         res.json({ message: 'Employee updated' });
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
 });
 
-app.delete('/api/employees/:id', (req, res) => {
+app.delete('/api/employees/:id', async (req, res) => {
     const { id } = req.params;
     try {
-        db.prepare('DELETE FROM employees WHERE id = ?').run(id);
+        await db.collection('employees').doc(id).delete();
         res.json({ message: 'Employee deleted' });
     } catch (err) {
         res.status(400).json({ error: err.message });
@@ -81,58 +87,66 @@ app.get('/api/employees/:id/assignments', (req, res) => {
 });
 
 // --- CUSTOMERS ---
-app.get('/api/customers', (req, res) => {
-    const customers = db.prepare('SELECT * FROM customers ORDER BY created_at DESC').all();
-    res.json(customers);
+app.get('/api/customers', async (req, res) => {
+    try {
+        const snapshot = await db.collection('customers').orderBy('created_at', 'desc').get();
+        const customers = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+        res.json(customers);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
-app.post('/api/customers', (req, res) => {
+app.post('/api/customers', async (req, res) => {
     const { id, name, contact, address } = req.body;
     try {
-        db.prepare('INSERT INTO customers (id, name, contact, address) VALUES (?, ?, ?, ?)')
-            .run(id, name, contact, address);
+        await db.collection('customers').doc(id).set({
+            name, contact, address,
+            created_at: new Date().toISOString()
+        });
         res.status(201).json({ id, message: 'Customer added' });
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
 });
 
-app.patch('/api/customers/:id', (req, res) => {
+app.patch('/api/customers/:id', async (req, res) => {
     const { id } = req.params;
     const { name, contact, address } = req.body;
     try {
-        db.prepare('UPDATE customers SET name = ?, contact = ?, address = ? WHERE id = ?')
-            .run(name, contact, address, id);
+        await db.collection('customers').doc(id).update({ name, contact, address });
         res.json({ message: 'Customer updated' });
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
 });
 
-app.delete('/api/customers/:id', (req, res) => {
+app.delete('/api/customers/:id', async (req, res) => {
     const { id } = req.params;
     try {
-        db.prepare('DELETE FROM customers WHERE id = ?').run(id);
+        await db.collection('customers').doc(id).delete();
         res.json({ message: 'Customer deleted' });
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
 });
 
-app.get('/api/customers/:id/orders', (req, res) => {
+app.get('/api/customers/:id/orders', async (req, res) => {
     const { id } = req.params;
     try {
-        const orders = db.prepare('SELECT * FROM orders WHERE customer_id = ? ORDER BY created_at DESC').all(id);
+        const snapshot = await db.collection('orders').where('customer_id', '==', id).orderBy('created_at', 'desc').get();
+        const orders = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
         res.json(orders);
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
 });
 
-app.get('/api/customers/:id/measurements', (req, res) => {
+app.get('/api/customers/:id/measurements', async (req, res) => {
     const { id } = req.params;
     try {
-        const measurements = db.prepare('SELECT * FROM measurements WHERE customer_id = ?').all(id);
+        const snapshot = await db.collection('measurements').where('customer_id', '==', id).get();
+        const measurements = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
         res.json(measurements);
     } catch (err) {
         res.status(400).json({ error: err.message });
@@ -140,38 +154,44 @@ app.get('/api/customers/:id/measurements', (req, res) => {
 });
 
 // --- SUPPLIERS ---
-app.get('/api/suppliers', (req, res) => {
-    const suppliers = db.prepare('SELECT * FROM suppliers ORDER BY name ASC').all();
-    res.json(suppliers);
+app.get('/api/suppliers', async (req, res) => {
+    try {
+        const snapshot = await db.collection('suppliers').orderBy('name', 'asc').get();
+        const suppliers = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+        res.json(suppliers);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
-app.post('/api/suppliers', (req, res) => {
+app.post('/api/suppliers', async (req, res) => {
     const { name, contact, address, notes } = req.body;
     try {
-        const result = db.prepare('INSERT INTO suppliers (name, contact, address, notes) VALUES (?, ?, ?, ?)')
-            .run(name, contact, address, notes);
-        res.status(201).json({ id: result.lastInsertRowid, message: 'Supplier added' });
+        const docRef = await db.collection('suppliers').add({
+            name, contact, address, notes,
+            created_at: new Date().toISOString()
+        });
+        res.status(201).json({ id: docRef.id, message: 'Supplier added' });
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
 });
 
-app.patch('/api/suppliers/:id', (req, res) => {
+app.patch('/api/suppliers/:id', async (req, res) => {
     const { id } = req.params;
     const { name, contact, address, notes } = req.body;
     try {
-        db.prepare('UPDATE suppliers SET name = ?, contact = ?, address = ?, notes = ? WHERE id = ?')
-            .run(name, contact, address, notes, id);
+        await db.collection('suppliers').doc(id).update({ name, contact, address, notes });
         res.json({ message: 'Supplier updated' });
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
 });
 
-app.delete('/api/suppliers/:id', (req, res) => {
+app.delete('/api/suppliers/:id', async (req, res) => {
     const { id } = req.params;
     try {
-        db.prepare('DELETE FROM suppliers WHERE id = ?').run(id);
+        await db.collection('suppliers').doc(id).delete();
         res.json({ message: 'Supplier deleted' });
     } catch (err) {
         res.status(400).json({ error: err.message });
@@ -179,43 +199,71 @@ app.delete('/api/suppliers/:id', (req, res) => {
 });
 
 // --- INVENTORY ---
-app.get('/api/inventory', (req, res) => {
-    const items = db.prepare(`
-        SELECT i.*, s.name as supplier_name
-        FROM inventory i
-        LEFT JOIN suppliers s ON i.supplier_id = s.id
-        ORDER BY i.item_name ASC
-    `).all();
-    res.json(items);
+app.get('/api/inventory', async (req, res) => {
+    try {
+        const snapshot = await db.collection('inventory').orderBy('item_name', 'asc').get();
+        const items = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+        res.json(items);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
-app.post('/api/inventory', (req, res) => {
+app.post('/api/inventory', async (req, res) => {
     const { item_name, quantity, min_level, unit, supplier_id, cost_price } = req.body;
     try {
-        db.prepare('INSERT INTO inventory (item_name, quantity, min_level, unit, supplier_id, cost_price) VALUES (?, ?, ?, ?, ?, ?)')
-            .run(item_name, quantity, min_level, unit, supplier_id || null, cost_price || 0);
+        let supplier_name = null;
+        if (supplier_id) {
+            const sDoc = await db.collection('suppliers').doc(supplier_id).get();
+            if (sDoc.exists) supplier_name = sDoc.data().name;
+        }
+
+        await db.collection('inventory').add({
+            item_name,
+            quantity: Number(quantity) || 0,
+            min_level: Number(min_level) || 5,
+            unit,
+            supplier_id: supplier_id || null,
+            supplier_name,
+            cost_price: Number(cost_price) || 0,
+            updated_at: new Date().toISOString()
+        });
         res.status(201).json({ message: 'Item added' });
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
 });
 
-app.patch('/api/inventory/:id', (req, res) => {
+app.patch('/api/inventory/:id', async (req, res) => {
     const { id } = req.params;
     const { item_name, quantity, min_level, unit, supplier_id, cost_price } = req.body;
     try {
-        db.prepare('UPDATE inventory SET item_name = ?, quantity = ?, min_level = ?, unit = ?, supplier_id = ?, cost_price = ? WHERE id = ?')
-            .run(item_name, quantity, min_level, unit, supplier_id || null, cost_price || 0, id);
+        let supplier_name = null;
+        if (supplier_id) {
+            const sDoc = await db.collection('suppliers').doc(supplier_id).get();
+            if (sDoc.exists) supplier_name = sDoc.data().name;
+        }
+
+        await db.collection('inventory').doc(id).update({
+            item_name,
+            quantity: Number(quantity),
+            min_level: Number(min_level),
+            unit,
+            supplier_id: supplier_id || null,
+            supplier_name,
+            cost_price: Number(cost_price),
+            updated_at: new Date().toISOString()
+        });
         res.json({ message: 'Inventory updated' });
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
 });
 
-app.delete('/api/inventory/:id', (req, res) => {
+app.delete('/api/inventory/:id', async (req, res) => {
     const { id } = req.params;
     try {
-        db.prepare('DELETE FROM inventory WHERE id = ?').run(id);
+        await db.collection('inventory').doc(id).delete();
         res.json({ message: 'Item deleted' });
     } catch (err) {
         res.status(400).json({ error: err.message });
@@ -223,31 +271,42 @@ app.delete('/api/inventory/:id', (req, res) => {
 });
 
 // --- MEASUREMENTS ---
-app.get('/api/measurements/:customer_id/:category', (req, res) => {
+app.get('/api/measurements/:customer_id/:category', async (req, res) => {
     const { customer_id, category } = req.params;
     try {
-        const measurement = db.prepare('SELECT * FROM measurements WHERE customer_id = ? AND category = ?')
-            .get(customer_id, category);
-        res.json(measurement || null);
+        const snapshot = await db.collection('measurements')
+            .where('customer_id', '==', customer_id)
+            .where('category', '==', category)
+            .limit(1)
+            .get();
+
+        if (snapshot.empty) return res.json(null);
+        res.json({ ...snapshot.docs[0].data(), id: snapshot.docs[0].id });
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
 });
 
-app.post('/api/measurements', (req, res) => {
+app.post('/api/measurements', async (req, res) => {
     const { customer_id, category, values_json } = req.body;
     try {
-        const existing = db.prepare('SELECT id FROM measurements WHERE customer_id = ? AND category = ?')
-            .get(customer_id, category);
+        const snapshot = await db.collection('measurements')
+            .where('customer_id', '==', customer_id)
+            .where('category', '==', category)
+            .limit(1)
+            .get();
 
-        const jsonStr = typeof values_json === 'string' ? values_json : JSON.stringify(values_json);
+        const data = {
+            customer_id,
+            category,
+            values_json: typeof values_json === 'string' ? values_json : JSON.stringify(values_json),
+            updated_at: new Date().toISOString()
+        };
 
-        if (existing) {
-            db.prepare('UPDATE measurements SET values_json = ? WHERE id = ?')
-                .run(jsonStr, existing.id);
+        if (!snapshot.empty) {
+            await db.collection('measurements').doc(snapshot.docs[0].id).update(data);
         } else {
-            db.prepare('INSERT INTO measurements (customer_id, category, values_json) VALUES (?, ?, ?)')
-                .run(customer_id, category, jsonStr);
+            await db.collection('measurements').add(data);
         }
         res.json({ message: 'Measurements saved' });
     } catch (err) {
@@ -256,44 +315,48 @@ app.post('/api/measurements', (req, res) => {
 });
 
 // --- ORDERS & ASSIGNMENTS ---
-app.get('/api/orders', (req, res) => {
-    const orders = db.prepare(`
-    SELECT o.*, c.name as customer_name,
-    (SELECT GROUP_CONCAT(employee_id || ':' || role) FROM order_assignments WHERE order_id = o.id) as assignments_data
-    FROM orders o 
-    JOIN customers c ON o.customer_id = c.id 
-    ORDER BY o.created_at DESC
-  `).all();
-    res.json(orders);
+app.get('/api/orders', async (req, res) => {
+    try {
+        const snapshot = await db.collection('orders').orderBy('created_at', 'desc').get();
+        const orders = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+        res.json(orders);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
-app.post('/api/orders', (req, res) => {
+app.post('/api/orders', async (req, res) => {
     const { id, customer_id, delivery_date, total_amount, advance_amount, assignments, category, measurements_json, dress_color } = req.body;
-    const insertOrder = db.prepare('INSERT INTO orders (id, customer_id, delivery_date, total_amount, advance_amount, category, measurements_json, dress_color) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
-    const insertAssign = db.prepare('INSERT INTO order_assignments (order_id, employee_id, role) VALUES (?, ?, ?)');
-
-    const transaction = db.transaction(() => {
-        insertOrder.run(id, customer_id, delivery_date, total_amount, advance_amount, category, measurements_json, dress_color || '');
-        if (assignments) {
-            for (const a of assignments) {
-                insertAssign.run(id, a.employee_id, a.role);
-            }
-        }
-    });
-
     try {
-        transaction();
+        // Fetch customer name for denormalization
+        const cDoc = await db.collection('customers').doc(customer_id).get();
+        const customer_name = cDoc.exists ? cDoc.data().name : 'Unknown';
+
+        const orderData = {
+            customer_id,
+            customer_name,
+            delivery_date,
+            total_amount: Number(total_amount),
+            advance_amount: Number(advance_amount),
+            category,
+            measurements_json,
+            dress_color: dress_color || '',
+            status: 'Pending',
+            assignments: assignments || [],
+            created_at: new Date().toISOString()
+        };
+
+        await db.collection('orders').doc(id).set(orderData);
         res.status(201).json({ id, message: 'Order created' });
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
 });
 
-app.delete('/api/orders/:id', (req, res) => {
+app.delete('/api/orders/:id', async (req, res) => {
     const { id } = req.params;
     try {
-        db.prepare('DELETE FROM order_assignments WHERE order_id = ?').run(id);
-        db.prepare('DELETE FROM orders WHERE id = ?').run(id);
+        await db.collection('orders').doc(id).delete();
         res.json({ message: 'Order deleted' });
     } catch (err) {
         res.status(400).json({ error: err.message });
@@ -301,100 +364,120 @@ app.delete('/api/orders/:id', (req, res) => {
 });
 
 // --- FINANCE ---
-app.get('/api/finance/cheques', (req, res) => {
-    const cheques = db.prepare('SELECT * FROM cheques ORDER BY due_date ASC').all();
-    res.json(cheques);
+app.get('/api/finance/cheques', async (req, res) => {
+    try {
+        const snapshot = await db.collection('cheques').orderBy('due_date', 'asc').get();
+        const cheques = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+        res.json(cheques);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
-app.post('/api/finance/cheques', upload.single('proof'), (req, res) => {
+app.post('/api/finance/cheques', upload.single('proof'), async (req, res) => {
     const { cheque_number, amount, due_date, given_to } = req.body;
     const proof_path = req.file ? `/uploads/${req.file.filename}` : null;
     try {
-        db.prepare('INSERT INTO cheques (cheque_number, amount, due_date, given_to, proof_path) VALUES (?, ?, ?, ?, ?)')
-            .run(cheque_number, amount, due_date, given_to, proof_path);
+        await db.collection('cheques').add({
+            cheque_number,
+            amount: Number(amount),
+            due_date,
+            given_to,
+            proof_path,
+            status: 'Pending',
+            created_at: new Date().toISOString()
+        });
         res.status(201).json({ message: 'Cheque record added' });
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
 });
 
-app.get('/api/finance/utilities', (req, res) => {
-    const utils = db.prepare('SELECT * FROM utilities ORDER BY due_date ASC').all();
-    res.json(utils);
+app.get('/api/finance/utilities', async (req, res) => {
+    try {
+        const snapshot = await db.collection('utilities').orderBy('due_date', 'asc').get();
+        const utils = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+        res.json(utils);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
-app.post('/api/finance/utilities', (req, res) => {
+app.post('/api/finance/utilities', async (req, res) => {
     const { type, amount, due_date } = req.body;
     try {
-        db.prepare('INSERT INTO utilities (type, amount, due_date) VALUES (?, ?, ?)')
-            .run(type, amount, due_date);
+        await db.collection('utilities').add({
+            type,
+            amount: Number(amount),
+            due_date,
+            status: 'Unpaid',
+            created_at: new Date().toISOString()
+        });
         res.status(201).json({ message: 'Utility bill added' });
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
 });
 
-app.patch('/api/orders/:id', (req, res) => {
+app.patch('/api/orders/:id', async (req, res) => {
     const { id } = req.params;
     const { customer_id, delivery_date, total_amount, advance_amount, assignments, category, measurements_json, dress_color } = req.body;
 
-    const updateOrder = db.prepare('UPDATE orders SET customer_id = ?, delivery_date = ?, total_amount = ?, advance_amount = ?, category = ?, measurements_json = ?, dress_color = ? WHERE id = ?');
-    const deleteAssign = db.prepare('DELETE FROM order_assignments WHERE order_id = ?');
-    const insertAssign = db.prepare('INSERT INTO order_assignments (order_id, employee_id, role) VALUES (?, ?, ?)');
-
-    const transaction = db.transaction(() => {
-        updateOrder.run(customer_id, delivery_date, total_amount, advance_amount, category, measurements_json, dress_color || '', id);
-        deleteAssign.run(id);
-        if (assignments) {
-            for (const a of assignments) {
-                insertAssign.run(id, a.employee_id, a.role);
-            }
-        }
-    });
-
     try {
-        transaction();
+        const cDoc = await db.collection('customers').doc(customer_id).get();
+        const customer_name = cDoc.exists ? cDoc.data().name : 'Unknown';
+
+        await db.collection('orders').doc(id).update({
+            customer_id,
+            customer_name,
+            delivery_date,
+            total_amount: Number(total_amount),
+            advance_amount: Number(advance_amount),
+            assignments: assignments || [],
+            category,
+            measurements_json,
+            dress_color: dress_color || ''
+        });
         res.json({ message: 'Order updated' });
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
 });
 
-app.patch('/api/orders/:id/status', (req, res) => {
+app.patch('/api/orders/:id/status', async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
     try {
-        const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(id);
-        if (!order) return res.status(404).json({ error: 'Order not found' });
+        const orderRef = db.collection('orders').doc(id);
+        const orderDoc = await orderRef.get();
+        if (!orderDoc.exists) return res.status(404).json({ error: 'Order not found' });
 
-        db.prepare('UPDATE orders SET status = ? WHERE id = ?').run(status, id);
+        await orderRef.update({ status });
 
-        // When marked Delivered, the full total_amount counts as income
-        // (tracked via delivered orders in stats - no extra table needed)
         res.json({
             message: 'Status updated',
             isDelivered: status === 'Delivered',
-            incomeAdded: status === 'Delivered' ? order.total_amount : 0
+            incomeAdded: status === 'Delivered' ? orderDoc.data().total_amount : 0
         });
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
 });
 
-app.patch('/api/finance/utilities/:id/pay', (req, res) => {
+app.patch('/api/finance/utilities/:id/pay', async (req, res) => {
     const { id } = req.params;
     try {
-        db.prepare('UPDATE utilities SET status = "Paid" WHERE id = ?').run(id);
+        await db.collection('utilities').doc(id).update({ status: 'Paid' });
         res.json({ message: 'Bill marked as paid' });
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
 });
 
-app.patch('/api/finance/cheques/:id/pay', (req, res) => {
+app.patch('/api/finance/cheques/:id/pay', async (req, res) => {
     const { id } = req.params;
     try {
-        db.prepare('UPDATE cheques SET status = "Paid" WHERE id = ?').run(id);
+        await db.collection('cheques').doc(id).update({ status: 'Paid' });
         res.json({ message: 'Cheque marked as paid' });
     } catch (err) {
         res.status(400).json({ error: err.message });
@@ -402,27 +485,33 @@ app.patch('/api/finance/cheques/:id/pay', (req, res) => {
 });
 
 // --- SALARY MANAGEMENT ---
-app.get('/api/finance/salaries', (req, res) => {
+app.get('/api/finance/salaries', async (req, res) => {
     try {
-        const salaries = db.prepare(`
-            SELECT s.*, e.name as employee_name 
-            FROM employee_salaries s
-            JOIN employees e ON s.employee_id = e.id
-            ORDER BY s.payment_date DESC
-        `).all();
+        const snapshot = await db.collection('salaries').orderBy('payment_date', 'desc').get();
+        const salaries = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
         res.json(salaries);
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
 });
 
-app.post('/api/finance/salaries', (req, res) => {
+app.post('/api/finance/salaries', async (req, res) => {
     const { employee_id, amount, month, payment_date, type, notes, pay_period } = req.body;
     try {
-        db.prepare(`
-            INSERT INTO employee_salaries (employee_id, amount, month, payment_date, type, notes, pay_period)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        `).run(employee_id, amount, month, payment_date, type, notes, pay_period);
+        const eDoc = await db.collection('employees').doc(employee_id).get();
+        const employee_name = eDoc.exists ? eDoc.data().name : 'Unknown';
+
+        await db.collection('salaries').add({
+            employee_id,
+            employee_name,
+            amount: Number(amount),
+            month,
+            payment_date,
+            type,
+            notes,
+            pay_period,
+            created_at: new Date().toISOString()
+        });
         res.status(201).json({ message: 'Salary payment recorded' });
     } catch (err) {
         res.status(400).json({ error: err.message });
@@ -430,73 +519,77 @@ app.post('/api/finance/salaries', (req, res) => {
 });
 
 // --- DASHBOARD STATS ---
-app.get('/api/stats', (req, res) => {
+app.get('/api/stats', async (req, res) => {
     try {
-        const stats = {
-            employees: db.prepare('SELECT COUNT(*) as count FROM employees').get().count,
-            customers: db.prepare('SELECT COUNT(*) as count FROM customers').get().count,
-            pendingOrders: db.prepare("SELECT COUNT(*) as count FROM orders WHERE status != 'Delivered'").get().count,
-            lowStock: db.prepare('SELECT COUNT(*) as count FROM inventory WHERE quantity <= min_level').get().count,
-            // Total income = advances collected from ALL orders + full total from DELIVERED orders
-            totalRevenue: (() => {
-                const advanceFromPending = db.prepare("SELECT COALESCE(SUM(advance_amount), 0) as total FROM orders WHERE status != 'Delivered'").get().total || 0;
-                const fullFromDelivered = db.prepare("SELECT COALESCE(SUM(total_amount), 0) as total FROM orders WHERE status = 'Delivered'").get().total || 0;
-                return advanceFromPending + fullFromDelivered;
-            })(),
-            // Balance due = sum of (total - advance) for all non-delivered orders (outstanding payments)
-            balanceDue: db.prepare("SELECT COALESCE(SUM(total_amount - advance_amount), 0) as total FROM orders WHERE status != 'Delivered'").get().total || 0,
-        };
+        const empCount = (await db.collection('employees').count().get()).data().count;
+        const custCount = (await db.collection('customers').count().get()).data().count;
+        const pendingOrdersSnapshot = await db.collection('orders').where('status', '!=', 'Delivered').get();
+        const lowStockSnapshot = await db.collection('inventory').get();
 
-        const recentOrders = db.prepare(`
-            SELECT o.*, c.name as customer_name 
-            FROM orders o 
-            JOIN customers c ON o.customer_id = c.id 
-            ORDER BY o.created_at DESC 
-            LIMIT 5
-        `).all();
+        const pendingOrdersCount = pendingOrdersSnapshot.size;
+        const lowStockCount = lowStockSnapshot.docs.filter(doc => doc.data().quantity <= doc.data().min_level).length;
 
-        // Weekly orders chart data
-        const weeklyData = db.prepare(`
-      SELECT strftime('%w', created_at) as day, COUNT(*) as count 
-      FROM orders 
-      WHERE created_at >= date('now', '-7 days')
-      GROUP BY day
-    `).all();
+        // Calculate Revenue
+        const allOrdersSnapshot = await db.collection('orders').get();
+        let totalRevenue = 0;
+        let balanceDue = 0;
 
-        const dayMap = { '0': 'Sun', '1': 'Mon', '2': 'Tue', '3': 'Wed', '4': 'Thu', '5': 'Fri', '6': 'Sat' };
-        const chartData = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(name => {
-            const dayKey = Object.keys(dayMap).find(key => dayMap[key] === name);
-            const dbDay = weeklyData.find(d => d.day === dayKey);
-            return { name, orders: dbDay ? dbDay.count : 0 };
+        allOrdersSnapshot.forEach(doc => {
+            const order = doc.data();
+            if (order.status === 'Delivered') {
+                totalRevenue += Number(order.total_amount) || 0;
+            } else {
+                totalRevenue += Number(order.advance_amount) || 0;
+                balanceDue += (Number(order.total_amount) || 0) - (Number(order.advance_amount) || 0);
+            }
         });
 
-        res.json({ ...stats, chartData, recentOrders });
+        const recentOrdersSnapshot = await db.collection('orders').orderBy('created_at', 'desc').limit(5).get();
+        const recentOrders = recentOrdersSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+
+        // Weekly Chart Data (Mocking for now as complex Firestore date filtering needs care)
+        const chartData = [
+            { name: 'Mon', orders: 0 },
+            { name: 'Tue', orders: 0 },
+            { name: 'Wed', orders: 0 },
+            { name: 'Thu', orders: 0 },
+            { name: 'Fri', orders: 0 },
+            { name: 'Sat', orders: 0 },
+            { name: 'Sun', orders: 0 },
+        ];
+
+        res.json({
+            employees: empCount,
+            customers: custCount,
+            pendingOrders: pendingOrdersCount,
+            lowStock: lowStockCount,
+            totalRevenue,
+            balanceDue,
+            chartData,
+            recentOrders
+        });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
 // --- ATTENDANCE ---
-
-// Get today's attendance for all employees
-app.get('/api/attendance/today', (req, res) => {
+app.get('/api/attendance/today', async (req, res) => {
     const today = new Date().toISOString().split('T')[0];
     try {
-        const employees = db.prepare('SELECT id, name, category FROM employees ORDER BY name').all();
-        const attendance = db.prepare('SELECT * FROM attendance WHERE date = ?').all(today);
+        const empSnapshot = await db.collection('employees').orderBy('name').get();
+        const employees = empSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+
+        const attnSnapshot = await db.collection('attendance').where('date', '==', today).get();
+        const attendance = attnSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+
+        const tasksSnapshot = await db.collection('task_entries').where('date', '==', today).get();
+        const allTasks = tasksSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
 
         const result = employees.map(emp => {
             const record = attendance.find(a => a.employee_id === emp.id);
-            const empTasks = db.prepare(`
-                SELECT t.id, t.order_id, o.customer_name, o.category
-                FROM task_entries t
-                LEFT JOIN (
-                    SELECT o.id, c.name as customer_name, o.category
-                    FROM orders o JOIN customers c ON o.customer_id = c.id
-                ) o ON t.order_id = o.id
-                WHERE t.employee_id = ? AND t.date = ?
-                ORDER BY t.created_at DESC
-            `).all(emp.id, today);
+            const empTasks = allTasks.filter(t => t.employee_id === emp.id);
+
             return {
                 ...emp,
                 attendance_id: record?.id || null,
@@ -513,16 +606,17 @@ app.get('/api/attendance/today', (req, res) => {
 });
 
 // Mark attendance (today only)
-app.post('/api/attendance/mark', (req, res) => {
+app.post('/api/attendance/mark', async (req, res) => {
     const { employee_id, status } = req.body;
     const today = new Date().toISOString().split('T')[0];
+    const id = `${employee_id}_${today}`;
     try {
-        // Upsert: insert or replace
-        db.prepare(`
-            INSERT INTO attendance (employee_id, date, status)
-            VALUES (?, ?, ?)
-            ON CONFLICT(employee_id, date) DO UPDATE SET status = ?, marked_at = CURRENT_TIMESTAMP
-        `).run(employee_id, today, status || 'Present', status || 'Present');
+        await db.collection('attendance').doc(id).set({
+            employee_id,
+            date: today,
+            status: status || 'Present',
+            marked_at: new Date().toISOString()
+        }, { merge: true });
         res.json({ message: 'Attendance marked', date: today });
     } catch (err) {
         res.status(400).json({ error: err.message });
@@ -530,45 +624,51 @@ app.post('/api/attendance/mark', (req, res) => {
 });
 
 // Get active orders (for task assignment dropdown)
-app.get('/api/attendance/orders/:employeeId', (req, res) => {
+app.get('/api/attendance/orders/:employeeId', async (req, res) => {
+    const { employeeId } = req.params;
     try {
-        // Get orders assigned to this employee first, then other active orders
-        const assignedOrders = db.prepare(`
-            SELECT DISTINCT o.id, c.name as customer_name, o.category, o.status, 1 as assigned
-            FROM orders o
-            JOIN customers c ON o.customer_id = c.id
-            JOIN order_assignments oa ON oa.order_id = o.id
-            WHERE oa.employee_id = ? AND o.status != 'Delivered'
-            ORDER BY o.created_at DESC
-        `).all(req.params.employeeId);
+        const snapshot = await db.collection('orders').where('status', '!=', 'Delivered').get();
+        const orders = snapshot.docs.map(doc => {
+            const data = doc.data();
+            const isAssigned = data.assignments?.some(a => a.employee_id === employeeId);
+            return {
+                id: doc.id,
+                customer_name: data.customer_name,
+                category: data.category,
+                status: data.status,
+                assigned: isAssigned ? 1 : 0
+            };
+        });
 
-        const otherOrders = db.prepare(`
-            SELECT o.id, c.name as customer_name, o.category, o.status, 0 as assigned
-            FROM orders o
-            JOIN customers c ON o.customer_id = c.id
-            WHERE o.status != 'Delivered'
-            AND o.id NOT IN (SELECT order_id FROM order_assignments WHERE employee_id = ?)
-            ORDER BY o.created_at DESC
-        `).all(req.params.employeeId);
-
-        res.json([...assignedOrders, ...otherOrders]);
+        // Sort by assigned status (assigned first)
+        orders.sort((a, b) => b.assigned - a.assigned);
+        res.json(orders);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
 // Add task entry (linked to order)
-app.post('/api/attendance/tasks', (req, res) => {
+app.post('/api/attendance/tasks', async (req, res) => {
     const { employee_id, order_id } = req.body;
     const today = new Date().toISOString().split('T')[0];
     try {
-        db.prepare('INSERT INTO task_entries (employee_id, order_id, date) VALUES (?, ?, ?)').run(employee_id, order_id, today);
-        // Also ensure attendance is marked as Present
-        db.prepare(`
-            INSERT INTO attendance (employee_id, date, status)
-            VALUES (?, ?, 'Present')
-            ON CONFLICT(employee_id, date) DO NOTHING
-        `).run(employee_id, today);
+        await db.collection('task_entries').add({
+            employee_id,
+            order_id,
+            date: today,
+            created_at: new Date().toISOString()
+        });
+
+        // Ensure attendance is marked
+        const attnId = `${employee_id}_${today}`;
+        await db.collection('attendance').doc(attnId).set({
+            employee_id,
+            date: today,
+            status: 'Present',
+            marked_at: new Date().toISOString()
+        }, { merge: true });
+
         res.json({ message: 'Task added', date: today });
     } catch (err) {
         res.status(400).json({ error: err.message });
@@ -576,9 +676,9 @@ app.post('/api/attendance/tasks', (req, res) => {
 });
 
 // Remove task entry
-app.delete('/api/attendance/tasks/:taskId', (req, res) => {
+app.delete('/api/attendance/tasks/:taskId', async (req, res) => {
     try {
-        db.prepare('DELETE FROM task_entries WHERE id = ?').run(req.params.taskId);
+        await db.collection('task_entries').doc(req.params.taskId).delete();
         res.json({ message: 'Task removed' });
     } catch (err) {
         res.status(400).json({ error: err.message });
@@ -586,10 +686,11 @@ app.delete('/api/attendance/tasks/:taskId', (req, res) => {
 });
 
 // Unmark attendance (remove today's record)
-app.delete('/api/attendance/:employeeId', (req, res) => {
+app.delete('/api/attendance/:employeeId', async (req, res) => {
     const today = new Date().toISOString().split('T')[0];
+    const id = `${req.params.employeeId}_${today}`;
     try {
-        db.prepare('DELETE FROM attendance WHERE employee_id = ? AND date = ?').run(req.params.employeeId, today);
+        await db.collection('attendance').doc(id).delete();
         res.json({ message: 'Attendance removed' });
     } catch (err) {
         res.status(400).json({ error: err.message });
@@ -597,13 +698,13 @@ app.delete('/api/attendance/:employeeId', (req, res) => {
 });
 
 // Weekly summary: each employee's attendance count for this week (Mon-Sun)
-app.get('/api/attendance/weekly', (req, res) => {
+app.get('/api/attendance/weekly', async (req, res) => {
     try {
-        const employees = db.prepare('SELECT id, name, category FROM employees ORDER BY name').all();
+        const empSnapshot = await db.collection('employees').orderBy('name').get();
+        const employees = empSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
 
-        // Get start of current week (Monday)
         const now = new Date();
-        const dayOfWeek = now.getDay(); // 0=Sun, 1=Mon...
+        const dayOfWeek = now.getDay();
         const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
         const monday = new Date(now);
         monday.setDate(now.getDate() + mondayOffset);
@@ -613,14 +714,18 @@ app.get('/api/attendance/weekly', (req, res) => {
         sundayDate.setDate(monday.getDate() + 6);
         const sundayStr = sundayDate.toISOString().split('T')[0];
 
-        const weekAttendance = db.prepare(`
-            SELECT employee_id, date, status, tasks_completed
-            FROM attendance
-            WHERE date >= ? AND date <= ?
-            ORDER BY date
-        `).all(mondayStr, sundayStr);
+        const attnSnapshot = await db.collection('attendance')
+            .where('date', '>=', mondayStr)
+            .where('date', '<=', sundayStr)
+            .get();
+        const weekAttendance = attnSnapshot.docs.map(doc => doc.data());
 
-        // Build day labels Mon-Sun
+        const tasksSnapshot = await db.collection('task_entries')
+            .where('date', '>=', mondayStr)
+            .where('date', '<=', sundayStr)
+            .get();
+        const weekTasks = tasksSnapshot.docs.map(doc => doc.data());
+
         const days = [];
         for (let i = 0; i < 7; i++) {
             const d = new Date(monday);
@@ -630,16 +735,18 @@ app.get('/api/attendance/weekly', (req, res) => {
 
         const result = employees.map(emp => {
             const empRecords = weekAttendance.filter(a => a.employee_id === emp.id);
+            const empTasks = weekTasks.filter(t => t.employee_id === emp.id);
+
             const dayStatuses = days.map(day => {
                 const rec = empRecords.find(r => r.date === day);
-                const dayTaskCount = db.prepare('SELECT COUNT(*) as cnt FROM task_entries WHERE employee_id = ? AND date = ?').get(emp.id, day).cnt;
+                const dayTaskCount = empTasks.filter(t => t.date === day).length;
                 return { date: day, status: rec?.status || null, tasks: dayTaskCount };
             });
+
             const presentCount = empRecords.filter(r => r.status === 'Present').length;
             const halfDayCount = empRecords.filter(r => r.status === 'Half-Day').length;
-            const totalTasks = days.reduce((sum, day) => {
-                return sum + db.prepare('SELECT COUNT(*) as cnt FROM task_entries WHERE employee_id = ? AND date = ?').get(emp.id, day).cnt;
-            }, 0);
+            const totalTasks = empTasks.length;
+
             return {
                 ...emp,
                 days: dayStatuses,

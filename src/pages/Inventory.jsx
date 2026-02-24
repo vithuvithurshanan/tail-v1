@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { inventoryService, supplierService } from '../services/db';
 import toast from 'react-hot-toast';
 import {
     Package,
@@ -30,12 +30,12 @@ const Inventory = () => {
 
     const fetchInventory = async () => {
         try {
-            const [invRes, supRes] = await Promise.all([
-                axios.get('http://localhost:3001/api/inventory'),
-                axios.get('http://localhost:3001/api/suppliers')
+            const [inventoryData, suppliersData] = await Promise.all([
+                inventoryService.getAll(),
+                supplierService.getAll()
             ]);
-            setItems(invRes.data);
-            setSuppliers(supRes.data);
+            setItems(inventoryData);
+            setSuppliers(suppliersData);
         } catch (err) {
             console.error(err);
         }
@@ -53,10 +53,10 @@ const Inventory = () => {
         e.preventDefault();
         try {
             if (isEditing) {
-                await axios.patch(`http://localhost:3001/api/inventory/${editId}`, formData);
+                await inventoryService.update(editId, formData);
                 toast.success('Inventory item updated!');
             } else {
-                await axios.post('http://localhost:3001/api/inventory', formData);
+                await inventoryService.add(formData);
                 toast.success('Item added to inventory!');
             }
             setShowAddModal(false);
@@ -65,7 +65,7 @@ const Inventory = () => {
             fetchInventory();
             setFormData({ item_name: '', quantity: 0, min_level: 5, unit: 'Meters', supplier_id: '', cost_price: '' });
         } catch (err) {
-            toast.error(err.response?.data?.error || `Error ${isEditing ? 'updating' : 'adding'} item`);
+            toast.error(err.message || `Error ${isEditing ? 'updating' : 'adding'} item`);
         }
     };
 
@@ -93,11 +93,11 @@ const Inventory = () => {
     const handleDelete = async (id) => {
         if (!window.confirm("Are you sure you want to delete this item?")) return;
         try {
-            await axios.delete(`http://localhost:3001/api/inventory/${id}`);
+            await inventoryService.delete(id);
             toast.success('Item deleted successfully!');
             fetchInventory();
         } catch (err) {
-            toast.error(err.response?.data?.error || "Error deleting item");
+            toast.error(err.message || "Error deleting item");
         }
     };
 

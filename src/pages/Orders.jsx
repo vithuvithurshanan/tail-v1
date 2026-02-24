@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { orderService, employeeService, customerService, measurementService } from '../services/db';
 import toast from 'react-hot-toast';
 import {
     ShoppingBag,
@@ -51,18 +51,17 @@ const Orders = () => {
 
     const fetchData = async () => {
         try {
-            const [ordRes, empRes, cusRes] = await Promise.all([
-                axios.get('http://localhost:3001/api/orders'),
-                axios.get('http://localhost:3001/api/employees'),
-                axios.get('http://localhost:3001/api/customers')
+            const [ordersData, employeesData, customersData] = await Promise.all([
+                orderService.getAll(),
+                employeeService.getAll(),
+                customerService.getAll()
             ]);
-            setOrders(ordRes.data);
-            setEmployees(empRes.data);
-            setCustomers(cusRes.data);
+            setOrders(ordersData);
+            setEmployees(employeesData);
+            setCustomers(customersData);
 
-            // Sync selected order if one is open
             if (selectedOrder) {
-                const refreshed = ordRes.data.find(o => o.id === selectedOrder.id);
+                const refreshed = ordersData.find(o => o.id === selectedOrder.id);
                 if (refreshed) setSelectedOrder(refreshed);
             }
         } catch (err) {
@@ -79,15 +78,14 @@ const Orders = () => {
         const fetchMeasurements = async () => {
             if (formData.customer_id && formData.category && !isEditing) {
                 try {
-                    const res = await axios.get(`http://localhost:3001/api/measurements/${formData.customer_id}/${formData.category}`);
-                    if (res.data) {
-                        const savedMeasurements = typeof res.data.values_json === 'string'
-                            ? JSON.parse(res.data.values_json)
-                            : res.data.values_json;
+                    const res = await measurementService.get(formData.customer_id, formData.category);
+                    if (res) {
+                        const savedMeasurements = typeof res.values_json === 'string'
+                            ? JSON.parse(res.values_json)
+                            : res.values_json;
                         setFormData(prev => ({ ...prev, measurements: savedMeasurements }));
                         toast.success('Measurements pre-filled from history');
                     } else {
-                        // Reset measurements if none found
                         setFormData(prev => ({ ...prev, measurements: {} }));
                     }
                 } catch (err) {
@@ -106,16 +104,14 @@ const Orders = () => {
         if (formData.stitcher_id) assignments.push({ employee_id: formData.stitcher_id, role: 'Stitcher' });
 
         try {
-            // 1. Save measurements to the measurements table first (for future refilling)
             if (formData.customer_id && formData.category) {
-                await axios.post('http://localhost:3001/api/measurements', {
+                await measurementService.save({
                     customer_id: formData.customer_id,
                     category: formData.category,
-                    values_json: formData.measurements
+                    values_json: JSON.stringify(formData.measurements)
                 });
             }
 
-            // 2. Prepare the order data
             const orderPayload = {
                 ...formData,
                 assignments,
@@ -123,11 +119,11 @@ const Orders = () => {
             };
 
             if (isEditing) {
-                await axios.patch(`http://localhost:3001/api/orders/${editId}`, orderPayload);
+                await orderService.update(editId, orderPayload);
                 toast.success('Order updated successfully!');
             } else {
                 const id = 'ORD' + Date.now().toString().slice(-6);
-                await axios.post('http://localhost:3001/api/orders', { ...orderPayload, id });
+                await orderService.add(id, orderPayload);
                 toast.success('New order created successfully!');
             }
 
@@ -138,7 +134,6 @@ const Orders = () => {
             if (isEditing && selectedOrder && selectedOrder.id === editId) {
                 setSelectedOrder(null);
             }
-            // Reset form
             setFormData({
                 customer_id: '',
                 category: 'Shirt',
@@ -151,7 +146,7 @@ const Orders = () => {
                 measurements: {}
             });
         } catch (err) {
-            toast.error(err.response?.data?.error || `Error ${isEditing ? 'updating' : 'creating'} order`);
+            toast.error(err.message || `Error ${isEditing ? 'updating' : 'creating'} order`);
         }
     };
 
@@ -205,18 +200,18 @@ const Orders = () => {
     const handleDeleteOrder = async (id) => {
         if (!window.confirm("Are you sure you want to cancel and delete this order?")) return;
         try {
-            await axios.delete(`http://localhost:3001/api/orders/${id}`);
+            await orderService.delete(id);
             toast.success('Order deleted successfully!');
             setSelectedOrder(null);
             fetchData();
         } catch (err) {
-            toast.error(err.response?.data?.error || "Error deleting order");
+            toast.error(err.message || "Error deleting order");
         }
     };
 
     const handleStatusChange = async (newStatus) => {
         try {
-            const res = await axios.patch(`http://localhost:3001/api/orders/${selectedOrder.id}/status`, { status: newStatus });
+            await orderService.updateStatus(selectedOrder.id, newStatus);
             if (newStatus === 'Delivered') {
                 toast.success(`✅ Order delivered! LKR ${Number(selectedOrder.total_amount).toLocaleString()} added to Total Income.`);
             } else {

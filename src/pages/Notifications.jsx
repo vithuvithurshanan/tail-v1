@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { statsService, orderService } from '../services/db';
 import { Bell, AlertTriangle, Clock, CheckCircle2, ShoppingBag } from 'lucide-react';
 
 const Notifications = () => {
@@ -8,20 +8,20 @@ const Notifications = () => {
     useEffect(() => {
         const generateAlerts = async () => {
             try {
-                const [statsRes, orderRes] = await Promise.all([
-                    axios.get('http://localhost:3001/api/stats'),
-                    axios.get('http://localhost:3001/api/orders')
+                const [statsData, ordersData] = await Promise.all([
+                    statsService.getStats(),
+                    orderService.getAll()
                 ]);
 
                 const newAlerts = [];
 
                 // Low Stock Alerts
-                if (statsRes.data.lowStock > 0) {
+                if (statsData.lowStock > 0) {
                     newAlerts.push({
                         id: 1,
                         type: 'warning',
                         title: 'Critical Stock Alert',
-                        message: `${statsRes.data.lowStock} items are below minimum quantity levels.`,
+                        message: `${statsData.lowStock} items are below minimum quantity levels.`,
                         icon: AlertTriangle,
                         time: 'Just now'
                     });
@@ -29,7 +29,7 @@ const Notifications = () => {
 
                 // Delivery Alerts
                 const today = new Date().toISOString().split('T')[0];
-                const dueToday = orderRes.data.filter(o => o.delivery_date === today && o.status !== 'Delivered');
+                const dueToday = ordersData.filter(o => o.delivery_date === today && o.status !== 'Delivered');
                 if (dueToday.length > 0) {
                     newAlerts.push({
                         id: 2,
@@ -42,12 +42,12 @@ const Notifications = () => {
                 }
 
                 // Pending Orders
-                if (statsRes.data.pendingOrders > 10) {
+                if (statsData.pendingOrders > 10) {
                     newAlerts.push({
                         id: 3,
                         type: 'success',
                         title: 'Production Busy',
-                        message: `Current workload is high with ${statsRes.data.pendingOrders} active orders.`,
+                        message: `Current workload is high with ${statsData.pendingOrders} active orders.`,
                         icon: ShoppingBag,
                         time: 'Daily Update'
                     });

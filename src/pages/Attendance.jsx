@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { attendanceService } from '../services/db';
 import toast from 'react-hot-toast';
 import {
     Clock,
@@ -31,12 +31,12 @@ const Attendance = () => {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [todayRes, weekRes] = await Promise.all([
-                axios.get('http://localhost:3001/api/attendance/today'),
-                axios.get('http://localhost:3001/api/attendance/weekly')
+            const [todayData, weekData] = await Promise.all([
+                attendanceService.getToday(),
+                attendanceService.getWeekly()
             ]);
-            setTodayData(todayRes.data);
-            setWeeklyData(weekRes.data);
+            setTodayData(todayData);
+            setWeeklyData(weekData);
         } catch (err) {
             console.error(err);
             toast.error('Failed to load attendance data');
@@ -48,14 +48,14 @@ const Attendance = () => {
 
     const markAttendance = async (employeeId, status) => {
         try {
-            await axios.post('http://localhost:3001/api/attendance/mark', {
+            await attendanceService.mark({
                 employee_id: employeeId,
                 status
             });
             toast.success(`Marked as ${status}`);
             fetchData();
         } catch (err) {
-            toast.error(err.response?.data?.error || 'Error marking attendance');
+            toast.error(err.message || 'Error marking attendance');
         }
     };
 
@@ -63,8 +63,8 @@ const Attendance = () => {
         setTaskModal({ open: true, employeeId, employeeName });
         setOrdersLoading(true);
         try {
-            const res = await axios.get(`http://localhost:3001/api/attendance/orders/${employeeId}`);
-            setAvailableOrders(res.data);
+            const data = await attendanceService.getOrdersForEmployee(employeeId);
+            setAvailableOrders(data);
         } catch (err) {
             toast.error('Failed to load orders');
         }
@@ -73,7 +73,7 @@ const Attendance = () => {
 
     const addTaskEntry = async (orderId) => {
         try {
-            await axios.post('http://localhost:3001/api/attendance/tasks', {
+            await attendanceService.addTask({
                 employee_id: taskModal.employeeId,
                 order_id: orderId
             });
@@ -81,13 +81,13 @@ const Attendance = () => {
             setTaskModal({ open: false, employeeId: '', employeeName: '' });
             fetchData();
         } catch (err) {
-            toast.error(err.response?.data?.error || 'Error adding task');
+            toast.error(err.message || 'Error adding task');
         }
     };
 
     const removeTaskEntry = async (taskId) => {
         try {
-            await axios.delete(`http://localhost:3001/api/attendance/tasks/${taskId}`);
+            await attendanceService.removeTask(taskId);
             toast.success('Task removed');
             fetchData();
         } catch (err) {
@@ -97,7 +97,7 @@ const Attendance = () => {
 
     const unmarkAttendance = async (employeeId) => {
         try {
-            await axios.delete(`http://localhost:3001/api/attendance/${employeeId}`);
+            await attendanceService.unmark(employeeId);
             toast.success('Attendance removed');
             fetchData();
         } catch (err) {
