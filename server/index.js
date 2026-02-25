@@ -69,17 +69,13 @@ app.delete('/api/employees/:id', async (req, res) => {
     }
 });
 
-app.get('/api/employees/:id/assignments', (req, res) => {
+app.get('/api/employees/:id/assignments', async (req, res) => {
     const { id } = req.params;
     try {
-        const assignments = db.prepare(`
-            SELECT oa.*, o.delivery_date, o.status, o.category, c.name as customer_name
-            FROM order_assignments oa
-            JOIN orders o ON oa.order_id = o.id
-            JOIN customers c ON o.customer_id = c.id
-            WHERE oa.employee_id = ?
-            ORDER BY o.created_at DESC
-        `).all(id);
+        const snapshot = await db.collection('orders').get();
+        const assignments = snapshot.docs
+            .map(doc => ({ ...doc.data(), id: doc.id }))
+            .filter(order => order.assignments?.some(a => a.employee_id === id));
         res.json(assignments);
     } catch (err) {
         res.status(400).json({ error: err.message });
