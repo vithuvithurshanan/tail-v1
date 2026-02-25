@@ -210,6 +210,17 @@ const Orders = () => {
     };
 
     const handleStatusChange = async (newStatus) => {
+        const STATUS_ORDER = ['Pending', 'Cutting', 'Stitching', 'Finished', 'Delivered'];
+        const currentIndex = STATUS_ORDER.indexOf(selectedOrder.status);
+        const nextIndex = STATUS_ORDER.indexOf(newStatus);
+
+        if (nextIndex < currentIndex) {
+            toast.error(`Cannot revert status from ${selectedOrder.status} to ${newStatus}`);
+            return;
+        }
+
+        if (selectedOrder.status === newStatus) return;
+
         try {
             await orderService.updateStatus(selectedOrder.id, newStatus);
             if (newStatus === 'Delivered') {
@@ -375,16 +386,24 @@ const Orders = () => {
                             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm dark:shadow-none">
                                 <h3 className="font-bold mb-4 text-slate-900 dark:text-white">Production Status</h3>
                                 <div className="space-y-4 mb-8">
-                                    {['Pending', 'Cutting', 'Stitching', 'Finished', 'Delivered'].map((status) => (
-                                        <button
-                                            key={status}
-                                            onClick={() => handleStatusChange(status)}
-                                            className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-                                        >
-                                            <div className={`w-3 h-3 rounded-full ${selectedOrder.status === status ? 'bg-blue-600 dark:bg-blue-500 ring-4 ring-blue-500/20' : 'bg-slate-200 dark:bg-slate-800'}`}></div>
-                                            <span className={selectedOrder.status === status ? 'text-blue-600 dark:text-white font-medium' : 'text-slate-500 dark:text-slate-500'}>{status}</span>
-                                        </button>
-                                    ))}
+                                    {['Pending', 'Cutting', 'Stitching', 'Finished', 'Delivered'].map((status) => {
+                                        const STATUS_ORDER = ['Pending', 'Cutting', 'Stitching', 'Finished', 'Delivered'];
+                                        const isPast = STATUS_ORDER.indexOf(status) < STATUS_ORDER.indexOf(selectedOrder.status);
+                                        const isCurrent = selectedOrder.status === status;
+
+                                        return (
+                                            <button
+                                                key={status}
+                                                disabled={isPast}
+                                                onClick={() => handleStatusChange(status)}
+                                                className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors ${isPast ? 'opacity-30 cursor-not-allowed' : 'hover:bg-slate-50 dark:hover:bg-slate-800'
+                                                    }`}
+                                            >
+                                                <div className={`w-3 h-3 rounded-full ${isCurrent ? 'bg-blue-600 dark:bg-blue-500 ring-4 ring-blue-500/20' : 'bg-slate-200 dark:bg-slate-800'}`}></div>
+                                                <span className={isCurrent ? 'text-blue-600 dark:text-white font-medium' : 'text-slate-500 dark:text-slate-500'}>{status}</span>
+                                            </button>
+                                        );
+                                    })}
                                 </div>
 
                                 {selectedOrder.assignments_data && (
