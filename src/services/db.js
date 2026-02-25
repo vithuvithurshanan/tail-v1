@@ -105,9 +105,15 @@ export const orderService = {
         const cSnap = await getDoc(doc(db, "customers", data.customer_id));
         const customer_name = cSnap.exists() ? cSnap.data().name : "Unknown";
 
+        // Create assignments_data string for display/print compatibility
+        const assignments_data = data.assignments
+            ? data.assignments.map(a => `${a.employee_id}:${a.role}`).join(',')
+            : "";
+
         await setDoc(doc(db, "orders", id), {
             ...data,
             customer_name,
+            assignments_data,
             total_amount: Number(data.total_amount),
             advance_amount: Number(data.advance_amount),
             status: "Pending",
@@ -115,7 +121,15 @@ export const orderService = {
         });
     },
     update: async (id, data) => {
-        await updateDoc(doc(db, "orders", id), data);
+        // Create assignments_data string for display/print compatibility
+        const assignments_data = data.assignments
+            ? data.assignments.map(a => `${a.employee_id}:${a.role}`).join(',')
+            : "";
+
+        await updateDoc(doc(db, "orders", id), {
+            ...data,
+            assignments_data
+        });
     },
     updateStatus: async (id, status) => {
         await updateDoc(doc(db, "orders", id), { status });

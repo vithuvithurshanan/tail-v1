@@ -393,11 +393,12 @@ const Orders = () => {
                                         <div className="space-y-3">
                                             {selectedOrder.assignments_data.split(',').map((pair, idx) => {
                                                 const [empId, role] = pair.split(':');
+                                                const employee = employees.find(e => e.id === empId);
                                                 return (
                                                     <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
                                                         <div className="flex flex-col">
                                                             <span className="text-[10px] text-slate-500 font-bold uppercase">{role}</span>
-                                                            <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{empId}</span>
+                                                            <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{employee ? employee.name : empId}</span>
                                                         </div>
                                                         <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
                                                             <User size={13} />
@@ -519,10 +520,21 @@ const Orders = () => {
                                         <div className="grid grid-cols-2 gap-8">
                                             {selectedOrder.assignments_data ? selectedOrder.assignments_data.split(',').map((pair, idx) => {
                                                 const [empId, role] = pair.split(':');
+                                                const employee = employees.find(e => e.id === empId);
                                                 return (
                                                     <div key={idx} className="border-2 border-black p-4">
                                                         <p className="text-xs font-bold uppercase opacity-60">{role}</p>
-                                                        <p className="text-2xl font-black">{empId}</p>
+                                                        <p className="text-xl font-black">{employee ? employee.name : empId}</p>
+                                                        {employee && <p className="text-xs font-mono opacity-50">{empId}</p>}
+                                                    </div>
+                                                );
+                                            }) : (selectedOrder.assignments && selectedOrder.assignments.length > 0) ? selectedOrder.assignments.map((a, idx) => {
+                                                const employee = employees.find(e => e.id === a.employee_id);
+                                                return (
+                                                    <div key={idx} className="border-2 border-black p-4">
+                                                        <p className="text-xs font-bold uppercase opacity-60">{a.role}</p>
+                                                        <p className="text-xl font-black">{employee ? employee.name : a.employee_id}</p>
+                                                        {employee && <p className="text-xs font-mono opacity-50">{a.employee_id}</p>}
                                                     </div>
                                                 );
                                             }) : <p className="text-xl italic">No team members assigned</p>}
@@ -757,35 +769,33 @@ const Orders = () => {
                                 </div>
                             </div>
 
-                            {!isEditing && (
-                                <div className="border-t border-slate-200 dark:border-slate-800 pt-4 mt-4">
-                                    <h4 className="text-sm font-bold text-slate-500 uppercase mb-3 text-slate-400 dark:text-slate-500">Assignments</h4>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Cutting Master</label>
-                                            <select
-                                                value={formData.cutter_id}
-                                                onChange={(e) => setFormData({ ...formData, cutter_id: e.target.value })}
-                                                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2 outline-none text-sm text-slate-900 dark:text-white transition-all shadow-sm"
-                                            >
-                                                <option value="">Unassigned</option>
-                                                {employees.filter(e => e.category === 'Cutting Master').map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Stitching Master</label>
-                                            <select
-                                                value={formData.stitcher_id}
-                                                onChange={(e) => setFormData({ ...formData, stitcher_id: e.target.value })}
-                                                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2 outline-none text-sm text-slate-900 dark:text-white transition-all shadow-sm"
-                                            >
-                                                <option value="">Unassigned</option>
-                                                {employees.filter(e => e.category === 'Stitching Master').map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
-                                            </select>
-                                        </div>
+                            <div className="border-t border-slate-200 dark:border-slate-800 pt-4 mt-4">
+                                <h4 className="text-sm font-bold text-slate-500 uppercase mb-3 text-slate-400 dark:text-slate-500">Assignments</h4>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Cutting Master</label>
+                                        <select
+                                            value={formData.cutter_id}
+                                            onChange={(e) => setFormData({ ...formData, cutter_id: e.target.value })}
+                                            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2 outline-none text-sm text-slate-900 dark:text-white transition-all shadow-sm"
+                                        >
+                                            <option value="">Unassigned</option>
+                                            {employees.filter(e => e.category === 'Cutting Master').map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Stitching Master</label>
+                                        <select
+                                            value={formData.stitcher_id}
+                                            onChange={(e) => setFormData({ ...formData, stitcher_id: e.target.value })}
+                                            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2 outline-none text-sm text-slate-900 dark:text-white transition-all shadow-sm"
+                                        >
+                                            <option value="">Unassigned</option>
+                                            {employees.filter(e => e.category === 'Stitching Master').map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
+                                        </select>
                                     </div>
                                 </div>
-                            )}
+                            </div>
 
                             <div className="pt-6">
                                 <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-xl font-bold text-white transition-all shadow-lg shadow-blue-500/20">
