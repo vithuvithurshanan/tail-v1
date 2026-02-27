@@ -1,5 +1,5 @@
 node_modules
 dist
-.env
 server/serviceAccountKey.json
 data/
+config.bat

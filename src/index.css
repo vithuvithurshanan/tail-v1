@@ -23,6 +23,11 @@ button {
   font-family: sans-serif !important;
 }
 
+button:disabled {
+  cursor: not-allowed !important;
+  opacity: 0.6;
+}
+
 #root {
   width: 100%;
   min-height: 100vh;

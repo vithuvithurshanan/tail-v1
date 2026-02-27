@@ -31,6 +31,7 @@ const Customers = () => {
     const [viewingDetails, setViewingDetails] = useState(null); // The customer object being viewed
     const [customerOrders, setCustomerOrders] = useState([]);
     const [customerMeasurements, setCustomerMeasurements] = useState([]);
+    const [submitting, setSubmitting] = useState(false);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -93,6 +94,8 @@ const Customers = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (submitting) return;
+        setSubmitting(true);
         try {
             if (isEditing) {
                 await customerService.update(editId, formData);
@@ -112,6 +115,8 @@ const Customers = () => {
             setFormData({ name: '', contact: '', address: '' });
         } catch (err) {
             toast.error(err.message || `Error ${isEditing ? 'updating' : 'creating'} customer`);
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -142,11 +147,15 @@ const Customers = () => {
             fetchCustomers();
         } catch (err) {
             toast.error(err.message || "Error deleting customer");
+        } finally {
+            setSubmitting(false);
         }
     };
 
     const handleMeasurementSubmit = async (e) => {
         e.preventDefault();
+        if (submitting) return;
+        setSubmitting(true);
         try {
             await measurementService.save({
                 customer_id: selectedCustomer.id,
@@ -160,6 +169,8 @@ const Customers = () => {
             }
         } catch (err) {
             toast.error(err.message || "Error saving measurements");
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -461,8 +472,10 @@ const Customers = () => {
                             </div>
 
                             <div className="pt-4 flex gap-4">
-                                <button type="button" onClick={() => setShowMeasurementModal(false)} className="flex-1 bg-slate-100 dark:bg-slate-800 py-4 rounded-2xl font-bold text-slate-500 active:scale-95 transition-all">Cancel</button>
-                                <button type="submit" className="flex-1 bg-blue-600 py-4 rounded-2xl font-bold text-white shadow-xl shadow-blue-600/30 active:scale-95 transition-all">Save Changes</button>
+                                <button type="button" disabled={submitting} onClick={() => setShowMeasurementModal(false)} className="flex-1 bg-slate-100 dark:bg-slate-800 py-4 rounded-2xl font-bold text-slate-500 active:scale-95 transition-all">Cancel</button>
+                                <button type="submit" disabled={submitting} className={`flex-1 bg-blue-600 py-4 rounded-2xl font-bold text-white shadow-xl shadow-blue-600/30 active:scale-95 transition-all ${submitting ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                    {submitting ? 'Saving...' : 'Save Changes'}
+                                </button>
                             </div>
                         </form>
                     </div>
@@ -515,9 +528,10 @@ const Customers = () => {
                             <div className="pt-6">
                                 <button
                                     type="submit"
-                                    className="w-full bg-blue-600 hover:bg-blue-700 py-5 rounded-2xl font-black text-white transition-all shadow-xl shadow-blue-600/20 active:scale-[0.98] uppercase tracking-[0.2em] text-[10px]"
+                                    disabled={submitting}
+                                    className={`w-full bg-blue-600 hover:bg-blue-700 py-5 rounded-2xl font-black text-white transition-all shadow-xl shadow-blue-600/20 active:scale-[0.98] uppercase tracking-[0.2em] text-[10px] ${submitting ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 >
-                                    {isEditing ? 'Save Changes' : 'Create Profile'}
+                                    {submitting ? 'Processing...' : (isEditing ? 'Save Changes' : 'Create Profile')}
                                 </button>
                             </div>
                         </form>

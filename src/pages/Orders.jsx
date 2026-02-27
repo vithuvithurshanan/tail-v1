@@ -27,6 +27,7 @@ const Orders = () => {
     const [printType, setPrintType] = useState('invoice'); // 'invoice' or 'task'
     const [employees, setEmployees] = useState([]);
     const [customers, setCustomers] = useState([]);
+    const [submitting, setSubmitting] = useState(false);
 
     // Standard measurement fields configuration
     const MEASUREMENT_CONFIG = {
@@ -99,6 +100,8 @@ const Orders = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (submitting) return;
+        setSubmitting(true);
         const assignments = [];
         if (formData.cutter_id) assignments.push({ employee_id: formData.cutter_id, role: 'Cutter' });
         if (formData.stitcher_id) assignments.push({ employee_id: formData.stitcher_id, role: 'Stitcher' });
@@ -147,6 +150,8 @@ const Orders = () => {
             });
         } catch (err) {
             toast.error(err.message || `Error ${isEditing ? 'updating' : 'creating'} order`);
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -199,6 +204,7 @@ const Orders = () => {
 
     const handleDeleteOrder = async (id) => {
         if (!window.confirm("Are you sure you want to cancel and delete this order?")) return;
+        setSubmitting(true);
         try {
             await orderService.delete(id);
             toast.success('Order deleted successfully!');
@@ -206,6 +212,8 @@ const Orders = () => {
             fetchData();
         } catch (err) {
             toast.error(err.message || "Error deleting order");
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -221,6 +229,7 @@ const Orders = () => {
 
         if (selectedOrder.status === newStatus) return;
 
+        setSubmitting(true);
         try {
             await orderService.updateStatus(selectedOrder.id, newStatus);
             if (newStatus === 'Delivered') {
@@ -232,6 +241,8 @@ const Orders = () => {
             fetchData();
         } catch (err) {
             toast.error(err.message || "Error updating status");
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -302,13 +313,13 @@ const Orders = () => {
                             </button>
                             <button
                                 onClick={() => handleDeleteOrder(selectedOrder.id)}
-                                disabled={selectedOrder.status !== 'Pending'}
+                                disabled={selectedOrder.status !== 'Pending' || submitting}
                                 className={`px-4 py-2 rounded-lg flex items-center gap-2 no-print transition-all shadow-sm ${selectedOrder.status === 'Pending'
                                     ? "bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-600 text-rose-600 dark:text-rose-500 hover:text-white"
                                     : "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed opacity-50"
-                                    }`}
+                                    } ${submitting ? 'cursor-not-allowed opacity-50' : ''}`}
                             >
-                                <Trash2 size={20} /> Cancel Order
+                                <Trash2 size={20} /> {submitting ? 'Processing...' : 'Cancel Order'}
                             </button>
                         </div>
                     </div>
@@ -396,9 +407,9 @@ const Orders = () => {
                                         return (
                                             <button
                                                 key={status}
-                                                disabled={isPast}
+                                                disabled={isPast || submitting}
                                                 onClick={() => handleStatusChange(status)}
-                                                className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors ${isPast ? 'opacity-30 cursor-not-allowed' : 'hover:bg-slate-50 dark:hover:bg-slate-800'
+                                                className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors ${isPast || submitting ? 'opacity-30 cursor-not-allowed' : 'hover:bg-slate-50 dark:hover:bg-slate-800'
                                                     }`}
                                             >
                                                 <div className={`w-3 h-3 rounded-full ${isCurrent ? 'bg-blue-600 dark:bg-blue-500 ring-4 ring-blue-500/20' : 'bg-slate-200 dark:bg-slate-800'}`}></div>
@@ -819,8 +830,12 @@ const Orders = () => {
                             </div>
 
                             <div className="pt-6">
-                                <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-xl font-bold text-white transition-all shadow-lg shadow-blue-500/20">
-                                    {isEditing ? 'Update Order Details' : 'Create Order & Invoice'}
+                                <button
+                                    type="submit"
+                                    disabled={submitting}
+                                    className={`w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-xl font-bold text-white transition-all shadow-lg shadow-blue-500/20 ${submitting ? 'cursor-not-allowed opacity-50' : ''}`}
+                                >
+                                    {submitting ? 'Processing...' : (isEditing ? 'Update Order Details' : 'Create Order & Invoice')}
                                 </button>
                             </div>
                         </form>

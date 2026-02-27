@@ -10,7 +10,8 @@ import Login from './pages/Login';
 import Notifications from './pages/Notifications';
 import Suppliers from './pages/Suppliers';
 import Attendance from './pages/Attendance';
-import { LogOut, Sun, Moon } from 'lucide-react';
+import Help from './pages/Help';
+import { LogOut, Sun, Moon, HelpCircle } from 'lucide-react';
 
 import {
   LayoutDashboard,
@@ -152,6 +153,7 @@ const App = () => {
               <SidebarItem to="/suppliers" icon={Truck} label={isSidebarOpen ? "Suppliers" : ""} isDarkMode={isDarkMode} />
               {user.role === 'admin' && <SidebarItem to="/finance" icon={CreditCard} label={isSidebarOpen ? "Finance" : ""} isDarkMode={isDarkMode} />}
               <SidebarItem to="/notifications" icon={Bell} label={isSidebarOpen ? "Alerts" : ""} isDarkMode={isDarkMode} />
+              <SidebarItem to="/help" icon={HelpCircle} label={isSidebarOpen ? "Help" : ""} isDarkMode={isDarkMode} />
             </nav>
 
             <div className={cn(
@@ -233,6 +235,7 @@ const App = () => {
             {user.role === 'admin' && <Route path="/finance" element={<Finance />} />}
             <Route path="/settings" element={<div className="p-8">Settings</div>} />
             <Route path="/notifications" element={<Notifications />} />
+            <Route path="/help" element={<Help />} />
           </Routes>
         </main>
       </div>

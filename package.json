@@ -4,14 +4,15 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "npm run client",
+    "dev": "node init && npm run client",
     "client": "vite",
     "server": "node server/index.js",
-    "build": "vite build",
+    "build": "node init && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "axios": "^1.7.9",
     "better-sqlite3": "^11.8.1",
     "clsx": "^2.1.1",

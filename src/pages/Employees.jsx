@@ -30,6 +30,7 @@ const Employees = () => {
     const [editId, setEditId] = useState(null);
     const [viewingDetails, setViewingDetails] = useState(null);
     const [assignments, setAssignments] = useState([]);
+    const [submitting, setSubmitting] = useState(false);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -77,6 +78,8 @@ const Employees = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (submitting) return;
+        setSubmitting(true);
         try {
             if (isEditing) {
                 await employeeService.update(editId, formData);
@@ -96,6 +99,8 @@ const Employees = () => {
             setFormData({ name: '', age: '', contact: '', address: '', category: 'Stitching Master' });
         } catch (err) {
             toast.error(err.message || `Error ${isEditing ? 'updating' : 'adding'} employee`);
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -116,6 +121,7 @@ const Employees = () => {
     const handleDelete = async (id, e) => {
         if (e) e.stopPropagation();
         if (!window.confirm("Are you sure you want to delete this employee?")) return;
+        setSubmitting(true);
         try {
             await employeeService.delete(id);
             toast.success('Employee deleted successfully!');
@@ -123,6 +129,8 @@ const Employees = () => {
             fetchEmployees();
         } catch (err) {
             toast.error(err.message || "Error deleting employee");
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -444,9 +452,9 @@ const Employees = () => {
                                 />
                             </div>
                             <div className="pt-6 flex gap-4">
-                                <button type="button" onClick={closeModal} className="flex-1 bg-slate-100 dark:bg-slate-800 py-4 rounded-2xl font-bold text-slate-500 active:scale-95 transition-all uppercase tracking-widest text-[10px]">Cancel</button>
-                                <button type="submit" className="flex-1 bg-blue-600 py-4 rounded-2xl font-black text-white shadow-xl shadow-blue-500/30 active:scale-95 transition-all uppercase tracking-[0.2em] text-[10px]">
-                                    {isEditing ? 'Save Changes' : 'Register Worker'}
+                                <button type="button" disabled={submitting} onClick={closeModal} className="flex-1 bg-slate-100 dark:bg-slate-800 py-4 rounded-2xl font-bold text-slate-500 active:scale-95 transition-all uppercase tracking-widest text-[10px]">Cancel</button>
+                                <button type="submit" disabled={submitting} className={`flex-1 bg-blue-600 py-4 rounded-2xl font-black text-white shadow-xl shadow-blue-500/30 active:scale-95 transition-all uppercase tracking-[0.2em] text-[10px] ${submitting ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                    {submitting ? 'Saving...' : (isEditing ? 'Save Changes' : 'Register Worker')}
                                 </button>
                             </div>
                         </form>
