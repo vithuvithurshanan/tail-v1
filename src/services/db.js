@@ -40,20 +40,15 @@ export const employeeService = {
         await deleteDoc(doc(db, "employees", id));
     },
     getAssignments: async (id) => {
-        const q = query(collection(db, "orders"), where("assignments", "array-contains", { employee_id: id }));
-        // Note: Field path matching for objects in arrays is tricky in Firestore. 
-        // Simplest way: Fetch recent orders and filter in frontend OR denormalize assignments.
-        // For now, let's fetch all orders and filter manually since the dataset is small.
-        const snap = await getDocs(collection(db, "orders"));
-        return snap.docs
-            .map(d => ({ ...d.data(), id: d.id }))
-            .filter(o => o.assignments?.some(a => a.employee_id === id));
+        const q = query(collection(db, "orders"), where("assignment_ids", "array-contains", id));
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map(d => ({ ...d.data(), id: d.id }));
     }
 };
 
 export const customerService = {
     getAll: async () => {
-        const q = query(collection(db, "customers"), orderBy("created_at", "desc"));
+        const q = query(collection(db, "customers"), orderBy("created_at", "desc"), limit(100));
         const snapshot = await getDocs(q);
         return snapshot.docs.map(d => ({ ...d.data(), id: d.id }));
     },
@@ -128,7 +123,7 @@ export const measurementService = {
 
 export const orderService = {
     getAll: async () => {
-        const q = query(collection(db, "orders"), orderBy("created_at", "desc"));
+        const q = query(collection(db, "orders"), orderBy("created_at", "desc"), limit(100));
         const snapshot = await getDocs(q);
         return snapshot.docs.map(d => ({ ...d.data(), id: d.id }));
     },
@@ -137,15 +132,19 @@ export const orderService = {
         const cSnap = await getDoc(doc(db, "customers", data.customer_id));
         const customer_name = cSnap.exists() ? cSnap.data().name : "Unknown";
 
-        // Create assignments_data string for display/print compatibility
+        // Create assignments_data string and assignment_ids array for performance
         const assignments_data = data.assignments
             ? data.assignments.map(a => `${a.employee_id}:${a.role}`).join(',')
             : "";
+        const assignment_ids = data.assignments
+            ? data.assignments.map(a => a.employee_id)
+            : [];
 
         await setDoc(doc(db, "orders", id), {
             ...data,
             customer_name,
             assignments_data,
+            assignment_ids,
             total_amount: Number(data.total_amount),
             advance_amount: Number(data.advance_amount),
             status: "Pending",
@@ -153,14 +152,18 @@ export const orderService = {
         });
     },
     update: async (id, data) => {
-        // Create assignments_data string for display/print compatibility
+        // Create assignments_data string and assignment_ids array for performance
         const assignments_data = data.assignments
             ? data.assignments.map(a => `${a.employee_id}:${a.role}`).join(',')
             : "";
+        const assignment_ids = data.assignments
+            ? data.assignments.map(a => a.employee_id)
+            : [];
 
         await updateDoc(doc(db, "orders", id), {
             ...data,
-            assignments_data
+            assignments_data,
+            assignment_ids
         });
     },
     updateStatus: async (id, status) => {
@@ -332,11 +335,11 @@ export const attendanceService = {
         await deleteDoc(doc(db, "attendance", `${employeeId}_${today}`));
     },
     getOrdersForEmployee: async (employeeId) => {
-        const q = query(collection(db, "orders"), where("status", "in", ["Pending", "Cutting", "Stitching"]));
+        const q = query(collection(db, "orders"),
+            where("status", "in", ["Pending", "Cutting", "Stitching"]),
+            where("assignment_ids", "array-contains", employeeId));
         const snapshot = await getDocs(q);
-        return snapshot.docs
-            .map(d => ({ ...d.data(), id: d.id }))
-            .filter(o => o.assignments?.some(a => a.employee_id === employeeId));
+        return snapshot.docs.map(d => ({ ...d.data(), id: d.id }));
     },
     addTask: async ({ employee_id, order_id }) => {
         const today = new Date().toISOString().split('T')[0];
@@ -413,12 +416,20 @@ export const statsService = {
     getStats: async () => {
         const empCount = (await getCountFromServer(collection(db, "employees"))).data().count;
         const custCount = (await getCountFromServer(collection(db, "customers"))).data().count;
-        const ordersSnap = await getDocs(collection(db, "orders"));
-        const inventorySnap = await getDocs(collection(db, "inventory"));
+        const pendingCount = (await getCountFromServer(query(collection(db, "orders"), where("status", "!=", "Delivered")))).data().count;
+        const lowStockCount = (await getCountFromServer(query(collection(db, "inventory")))).data().count; // Simplification, for exact low stock we might need to fetch
 
+        // Fetch only recent orders for the dashboard, not all time
+        const recentOrdersSnap = await getDocs(query(collection(db, "orders"), orderBy("created_at", "desc"), limit(5)));
+        const recentOrders = recentOrdersSnap.docs.map(d => ({ ...d.data(), id: d.id }));
+
+        // For revenue, fetching only delivered orders or pending ones. For small shops this is okay.
+        // If data grows, we should maintain a 'totals' document.
+        const ordersSnap = await getDocs(query(collection(db, "orders"), limit(100))); // Limit to last 100 for stats calculation
         const orders = ordersSnap.docs.map(d => d.data());
-        const pendingOrders = orders.filter(o => o.status !== "Delivered");
-        const lowStock = inventorySnap.docs.filter(d => d.data().quantity <= d.data().min_level);
+
+        const lowStockSnap = await getDocs(collection(db, "inventory"));
+        const lowStock = lowStockSnap.docs.filter(d => d.data().quantity <= d.data().min_level);
 
         let totalRevenue = 0;
         let balanceDue = 0;
@@ -431,15 +442,10 @@ export const statsService = {
             }
         });
 
-        const recentOrders = ordersSnap.docs
-            .map(d => ({ ...d.data(), id: d.id }))
-            .sort((a, b) => b.created_at.localeCompare(a.created_at))
-            .slice(0, 5);
-
         return {
             employees: empCount,
             customers: custCount,
-            pendingOrders: pendingOrders.length,
+            pendingOrders: pendingCount,
             lowStock: lowStock.length,
             totalRevenue,
             balanceDue,
