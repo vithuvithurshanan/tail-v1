@@ -280,12 +280,14 @@ const Orders = () => {
                             <p className="text-slate-500 dark:text-slate-400 font-mono text-sm">{selectedOrder.id} - {selectedOrder.category}</p>
                         </div>
                         <div className="flex gap-2">
-                            <button
-                                onClick={() => handleEdit(selectedOrder)}
-                                className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-blue-600 dark:text-blue-400 px-4 py-2 rounded-lg flex items-center gap-2 no-print transition-colors shadow-sm"
-                            >
-                                <Edit size={20} /> Edit Order
-                            </button>
+                            {selectedOrder.status === 'Pending' && (
+                                <button
+                                    onClick={() => handleEdit(selectedOrder)}
+                                    className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-blue-600 dark:text-blue-400 px-4 py-2 rounded-lg flex items-center gap-2 no-print transition-colors shadow-sm"
+                                >
+                                    <Edit size={20} /> Edit Order
+                                </button>
+                            )}
                             <button
                                 onClick={handlePrintInvoice}
                                 className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-900 dark:text-white px-4 py-2 rounded-lg flex items-center gap-2 no-print transition-colors shadow-sm"
