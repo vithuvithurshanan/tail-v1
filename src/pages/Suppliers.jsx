@@ -352,8 +352,9 @@ const Suppliers = () => {
                                 />
                             </div>
                             <div>
-                                <label className="label-standard">Contact Number</label>
+                                <label className="label-standard">Contact Number *</label>
                                 <input
+                                    required
                                     type="text"
                                     placeholder="+94 77 000 0000"
                                     value={formData.contact}

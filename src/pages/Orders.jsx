@@ -686,7 +686,7 @@ const Orders = () => {
                                         className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white transition-all shadow-sm"
                                     >
                                         <option value="">Choose Customer...</option>
-                                        {customers.map(c => <option key={c.id} value={c.id}>{c.name} ({c.id})</option>)}
+                                        {customers.map(c => <option key={c.id} value={c.id}>{c.name} ({c.contact})</option>)}
                                     </select>
                                 </div>
                                 <div>

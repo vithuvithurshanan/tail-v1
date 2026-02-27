@@ -10,7 +10,17 @@ export const employeeService = {
         const snapshot = await getDocs(q);
         return snapshot.docs.map(d => ({ ...d.data(), id: d.id }));
     },
+    getByPhone: async (phone) => {
+        const q = query(collection(db, "employees"), where("contact", "==", phone));
+        const snapshot = await getDocs(q);
+        if (snapshot.empty) return null;
+        return { ...snapshot.docs[0].data(), id: snapshot.docs[0].id };
+    },
     add: async (id, data) => {
+        const existing = await employeeService.getByPhone(data.contact);
+        if (existing) {
+            throw new Error(`Phone number ${data.contact} is already registered to ${existing.name} (${existing.id})`);
+        }
         await setDoc(doc(db, "employees", id), {
             ...data,
             created_at: new Date().toISOString()
@@ -18,6 +28,12 @@ export const employeeService = {
         return { id };
     },
     update: async (id, data) => {
+        if (data.contact) {
+            const existing = await employeeService.getByPhone(data.contact);
+            if (existing && existing.id !== id) {
+                throw new Error(`Phone number ${data.contact} is already registered to ${existing.name} (${existing.id})`);
+            }
+        }
         await updateDoc(doc(db, "employees", id), data);
     },
     delete: async (id) => {
@@ -41,7 +57,17 @@ export const customerService = {
         const snapshot = await getDocs(q);
         return snapshot.docs.map(d => ({ ...d.data(), id: d.id }));
     },
+    getByPhone: async (phone) => {
+        const q = query(collection(db, "customers"), where("contact", "==", phone));
+        const snapshot = await getDocs(q);
+        if (snapshot.empty) return null;
+        return { ...snapshot.docs[0].data(), id: snapshot.docs[0].id };
+    },
     add: async (id, data) => {
+        const existing = await customerService.getByPhone(data.contact);
+        if (existing) {
+            throw new Error(`Phone number ${data.contact} is already registered to ${existing.name} (${existing.id})`);
+        }
         await setDoc(doc(db, "customers", id), {
             ...data,
             created_at: new Date().toISOString()
@@ -49,6 +75,12 @@ export const customerService = {
         return { id };
     },
     update: async (id, data) => {
+        if (data.contact) {
+            const existing = await customerService.getByPhone(data.contact);
+            if (existing && existing.id !== id) {
+                throw new Error(`Phone number ${data.contact} is already registered to ${existing.name} (${existing.id})`);
+            }
+        }
         await updateDoc(doc(db, "customers", id), data);
     },
     delete: async (id) => {
@@ -174,13 +206,32 @@ export const supplierService = {
         const snapshot = await getDocs(q);
         return snapshot.docs.map(d => ({ ...d.data(), id: d.id }));
     },
+    getByPhone: async (phone) => {
+        if (!phone) return null;
+        const q = query(collection(db, "suppliers"), where("contact", "==", phone));
+        const snapshot = await getDocs(q);
+        if (snapshot.empty) return null;
+        return { ...snapshot.docs[0].data(), id: snapshot.docs[0].id };
+    },
     add: async (data) => {
+        if (data.contact) {
+            const existing = await supplierService.getByPhone(data.contact);
+            if (existing) {
+                throw new Error(`Phone number ${data.contact} is already associated with supplier ${existing.name}`);
+            }
+        }
         await addDoc(collection(db, "suppliers"), {
             ...data,
             created_at: new Date().toISOString()
         });
     },
     update: async (id, data) => {
+        if (data.contact) {
+            const existing = await supplierService.getByPhone(data.contact);
+            if (existing && existing.id !== id) {
+                throw new Error(`Phone number ${data.contact} is already associated with supplier ${existing.name}`);
+            }
+        }
         await updateDoc(doc(db, "suppliers", id), data);
     },
     delete: async (id) => {
